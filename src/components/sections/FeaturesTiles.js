@@ -3,7 +3,8 @@ import classNames from 'classnames';
 import { SectionTilesProps } from '../../utils/SectionProps';
 import SectionHeader from './partials/SectionHeader';
 import Image from '../elements/Image';
-import './ModifiedStyles.css'
+import './ModifiedStyles.css';
+import { Link } from 'react-router-dom';
 
 const styles = {
   myborder:{
@@ -69,6 +70,7 @@ const FeaturesTiles = ({
           <div className={tilesClasses}>
 
             <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+              <Link to="/QuestionPapers">
               <div className="tiles-item-inner">
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
@@ -88,9 +90,11 @@ const FeaturesTiles = ({
                   </p>
                 </div>
               </div>
+              </Link>
             </div>
 
             <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+              <Link to="/Notes">
               <div className="tiles-item-inner">
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
@@ -110,9 +114,11 @@ const FeaturesTiles = ({
                   </p>
                 </div>
               </div>
+              </Link>
             </div>
 
             <div style={styles.myborder} className="tiles-item reveal-from-bottom" data-reveal-delay="400">
+            <Link to="/Labs">
               <div className="tiles-item-inner">
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
@@ -132,9 +138,11 @@ const FeaturesTiles = ({
                   </p>
                 </div>
               </div>
+              </Link>
             </div>
 
             <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+            <Link to="/Placements">
               <div className="tiles-item-inner">
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
@@ -154,6 +162,7 @@ const FeaturesTiles = ({
                   </p>
                 </div>
               </div>
+              </Link>
             </div>
 
           </div>
