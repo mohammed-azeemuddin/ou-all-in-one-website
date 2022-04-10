@@ -1,0 +1,17 @@
+@import url("https://pro.fontawesome.com/releases/v5.10.0/css/all.css");
+@import url("https://fonts.googleapis.com");
+@import url("https://fonts.gstatic.com");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;900&family=Ubuntu&display=swap");
+
+.tiles-item {
+  padding: 100px;
+}
+
+.tiles-item-inner{
+  padding: 100px;
+  transition: transform .2s; /* Animation */
+}
+
+.tiles-item-inner:hover {
+  transform: scale(1.1);
+}
