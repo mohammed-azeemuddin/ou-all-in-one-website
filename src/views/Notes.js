@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import firebase from './Firebase';
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import classNames from 'classnames';
 import { SectionProps } from '../utils/SectionProps';
 import Image from '../components/elements/Image';
@@ -60,44 +59,20 @@ const outerClasses = classNames(
   const db = firebase.firestore();
 
   function fetchAll(){
-    //e.preventDefault();
-    db.collection("Contacts")
-    .get()
-    .then((snapshot)=>{
-      if(snapshot.docs.length>0){
-        snapshot.docs.forEach((doc)=>{
-          setAllDocs((prev)=>{
-            return[...prev,doc.data()];
+      //e.preventDefault();
+      db.collection("engineering_notes")
+      .get()
+      .then((snapshot)=>{
+        if(snapshot.docs.length>0){
+          snapshot.docs.forEach((doc)=>{
+            setAllDocs((prev)=>{
+              return[...prev,doc.data()];
+            });
           });
-        });
-      }
-    });
-    //console.log(allDocs);
-  }
-
-  function download(url){
-    const storage = getStorage();
-    getDownloadURL(ref(storage, 'images/stars.jpg'))
-      .then((url) => {
-        // `url` is the download URL for 'images/stars.jpg'
-
-        // This can be downloaded directly:
-        const xhr = new XMLHttpRequest();
-        xhr.responseType = 'blob';
-        xhr.onload = (event) => {
-          const blob = xhr.response;
-        };
-        xhr.open('GET', url);
-        xhr.send();
-
-        // Or inserted into an <img> element
-        const img = document.getElementById('myimg');
-        img.setAttribute('src', url);
-      })
-      .catch((error) => {
-        // Handle any errors
+        }
       });
-  }
+      //console.log(allDocs);
+    }
 
   return (
 
@@ -119,11 +94,12 @@ const outerClasses = classNames(
                       <th style={styles.th}>Name</th>
                       <th style={styles.th}>Download</th>
                   </tr>
+
               {allDocs.map(function(a) {
                return (
                   <tr>
                     <td>{a.name}</td>
-                    <Link to={a.url}>
+                    <Link to= {{ pathname: a.url }} target="_blank">
                       <Image
                         src={require('../assets/images/download-icon.png')}
                         alt="icon1"
