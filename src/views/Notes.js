@@ -22,7 +22,7 @@ const styles = {
     marginLeft: 'auto',
     marginRight: 'auto',
     borderRight: '1px groove white',
-    marginTop: '20px',
+    marginTop: '20px'
   },
   th:{
     textAlign:'center'
@@ -61,6 +61,7 @@ const outerClasses = classNames(
   function fetchAll(){
       //e.preventDefault();
       db.collection("engineering_notes")
+      .orderBy('name')
       .get()
       .then((snapshot)=>{
         if(snapshot.docs.length>0){
