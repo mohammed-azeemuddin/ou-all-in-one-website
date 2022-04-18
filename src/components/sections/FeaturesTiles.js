@@ -4,7 +4,7 @@ import { SectionTilesProps } from '../../utils/SectionProps';
 import SectionHeader from './partials/SectionHeader';
 import Image from '../elements/Image';
 import './ModifiedStyles.css';
-import { Link } from 'react-router-dom';
+import { Link , useNavigate } from 'react-router-dom';
 
 const styles = {
   myborder:{
@@ -12,6 +12,9 @@ const styles = {
     borderRadius:'25px',
     margin:'20px',
     padding: '44px'
+  },
+  icon : {
+    padding: '10px'
   }
 }
 
@@ -56,8 +59,8 @@ const FeaturesTiles = ({
 
   const sectionHeader = {
     title: 'All your resources at one place',
-    paragraph: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum — semper quis lectus nulla at volutpat diam ut venenatis.'
   };
+
 
   return (
     <section
@@ -75,7 +78,8 @@ const FeaturesTiles = ({
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
                     <Image
-                      src={require('./../../assets/images/feature-tile-icon-01.svg')}
+                      style = {styles.icon}
+                      src={require('./../../myImages/engineer_icon.png')}
                       alt="Features tile icon 01"
                       width={64}
                       height={64} />
@@ -94,13 +98,17 @@ const FeaturesTiles = ({
             </div>
 
             <div style={styles.myborder} className="tiles-item reveal-from-bottom">
-              <Link to="/Notes">
+            <Link to={{
+                  pathname: "/Notes",
+                  state: { title: "New title here", dbName: "engineering_notes"}
+              }}>
               <div className="tiles-item-inner">
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
                     <Image
-                      src={require('./../../assets/images/feature-tile-icon-02.svg')}
-                      alt="Features tile icon 02"
+                      style = {styles.icon}
+                      src={require('./../../myImages/notes_icon.png')}
+                      alt="Features tile icon 01"
                       width={64}
                       height={64} />
                   </div>
@@ -123,8 +131,9 @@ const FeaturesTiles = ({
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
                     <Image
-                      src={require('./../../assets/images/feature-tile-icon-03.svg')}
-                      alt="Features tile icon 03"
+                      style = {styles.icon}
+                      src={require('./../../myImages/lab_icon.png')}
+                      alt="Features tile icon 01"
                       width={64}
                       height={64} />
                   </div>
@@ -147,8 +156,9 @@ const FeaturesTiles = ({
                 <div className="features-tiles-item-header">
                   <div className="features-tiles-item-image mb-16">
                     <Image
-                      src={require('./../../assets/images/feature-tile-icon-04.svg')}
-                      alt="Features tile icon 04"
+                      style = {styles.icon}
+                      src={require('./../../myImages/job_icon.png')}
+                      alt="Features tile icon 01"
                       width={64}
                       height={64} />
                   </div>

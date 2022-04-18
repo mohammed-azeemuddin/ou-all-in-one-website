@@ -1,0 +1,65 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+.popout {
+    animation: popout 1s ease;
+    -webkit-animation: popout 1s ease;
+}
+@keyframes popout {
+    from{transform:scale(0)}
+    80%{transform:scale(1.2)}
+    to{transform:scale(1)}
+}
+@-webkit-keyframes popout {
+    from{-webkit-transform:scale(0)}
+    80%{-webkit-transform:scale(1.2)}
+    to{-webkit-transform:scale(1)}
+}
+
+.fa-arrow-down {
+  color: white;
+  font-size: 24px;
+  padding: 10px;
+}
+
+table {
+  font-family: Open Sans;
+}
+
+table th {
+  color: white;
+  background-color: #6163FF;
+}
+
+table td {
+  background-color: #f1f1f1;
+  color: black;
+}
+
+form {
+  margin: 50px auto;
+}
+
+input[type=text] {
+  padding: 10px;
+  font-size: 17px;
+  border: 1px solid grey;
+  border-radius: 10px 0 0 10px;
+  background: #f1f1f1;
+  width: 55%;
+}
+
+button {
+  padding: 10px;
+  background: #6163FF;
+  color: white;
+  font-size: 17px;
+  border: 1px solid grey;
+  border-radius: 0 10px 10px 0;
+  border-left: none;
+  cursor: pointer;
+  width: 15%
+}
+
+button:hover {
+  background: #0b7dda;
+}

@@ -72,16 +72,19 @@ const Hero = ({
             </h1>
             <div className="container-xs">
               <p className="m-0 mb-32 reveal-from-bottom" data-reveal-delay="400">
-                  An all in one website for OU Students that consists of Previous Question Papers, Notes, Lab manuals and Placements for OU Students.
+                  An all in one website for OU Students that consists of Previous Question Papers, Notes, Lab manuals and Placements.
               </p>
               <div className="reveal-from-bottom" data-reveal-delay="600">
                 <ButtonGroup>
                   <Button tag="a" color="primary" wideMobile href="https://play.google.com/store/apps/details?id=com.azeem.ou_app2&hl=en_US&gl=US">
-                    <i class="fab fa-google-play" style={styles.playstoreIcon}></i>&nbsp;&nbsp;Download
+                    <i class="fab fa-google-play" style={styles.playstoreIcon}></i>&nbsp;&nbsp;Download App
                     </Button>
-                  <Button tag="a" color="dark" wideMobile href="https://github.com/cruip/open-react-template/">
-                    View on Github
-                    </Button>
+
+                  {/*
+                    <Button tag="a" color="dark" wideMobile href="https://github.com/cruip/open-react-template/">
+                      View on Github
+                    </Button>*/}
+
                 </ButtonGroup>
               </div>
             </div>

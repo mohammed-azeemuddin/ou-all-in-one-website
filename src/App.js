@@ -13,6 +13,7 @@ import QuestionPapers from './views/QuestionPapers';
 import Notes from './views/Notes';
 import Labs from './views/Labs';
 import Placements from './views/Placements';
+import DisplayPage from './views/DisplayPage';
 
 // Initialize Google Analytics
 ReactGA.initialize(process.env.REACT_APP_GA_CODE);
@@ -45,6 +46,7 @@ const App = () => {
           <AppRoute exact path="/Notes" component={Notes} layout={LayoutDefault} />
           <AppRoute exact path="/Labs" component={Labs} layout={LayoutDefault} />
           <AppRoute exact path="/Placements" component={Placements} layout={LayoutDefault} />
+          <AppRoute exact path="/DisplayPage" component={DisplayPage} layout={LayoutDefault} />
         </Switch>
       )} />
   );

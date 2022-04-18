@@ -1,35 +1,31 @@
-import React, { useEffect, useState } from "react";
-import firebase from './Firebase';
+import React from 'react';
 import classNames from 'classnames';
-import { SectionProps } from '../utils/SectionProps';
+import { SectionTilesProps } from '../utils/SectionProps';
 import Image from '../components/elements/Image';
-import { Link } from 'react-router-dom';
-
-// <td onClick={download(a.url)}>
-
-
-const propTypes = {
-  ...SectionProps.types
-}
-
-const defaultProps = {
-  ...SectionProps.defaults
-}
+import '../components/sections/ModifiedStyles.css';
+import SectionHeader from '../components/sections/partials/SectionHeader';
+import { Link , useNavigate } from 'react-router-dom';
 
 const styles = {
-  table:{
-    width: '75%',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    borderRight: '1px groove white',
-    marginTop: '20px'
+  myborder:{
+    border: '2px solid white',
+    borderRadius:'25px',
+    margin:'20px',
+    padding: '44px'
   },
-  th:{
-    textAlign:'center'
+  icon: {
+    padding: '10px'
   }
 }
 
-const Notes = (
+const propTypes = {
+  ...SectionTilesProps.types
+}
+
+const defaultProps = {
+  ...SectionTilesProps.defaults
+}
+const Notes = ({
   className,
   topOuterDivider,
   bottomOuterDivider,
@@ -37,11 +33,12 @@ const Notes = (
   bottomDivider,
   hasBgColor,
   invertColor,
+  pushLeft,
   ...props
-) => {
+}) => {
 
-const outerClasses = classNames(
-    'hero section center-content',
+  const outerClasses = classNames(
+    'features-tiles section',
     topOuterDivider && 'has-top-divider',
     bottomOuterDivider && 'has-bottom-divider',
     hasBgColor && 'has-bg-color',
@@ -55,66 +52,166 @@ const outerClasses = classNames(
     bottomDivider && 'has-bottom-divider'
   );
 
-  const [allDocs,setAllDocs] = useState([]);
-  const db = firebase.firestore();
+  const tilesClasses = classNames(
+    'tiles-wrap center-content',
+    pushLeft && 'push-left'
+  );
 
-  function fetchAll(){
-      //e.preventDefault();
-      db.collection("engineering_notes")
-      .orderBy('name')
-      .get()
-      .then((snapshot)=>{
-        if(snapshot.docs.length>0){
-          snapshot.docs.forEach((doc)=>{
-            setAllDocs((prev)=>{
-              return[...prev,doc.data()];
-            });
-          });
-        }
-      });
-      //console.log(allDocs);
-    }
+  const image_url = './myImages/download-icon.png';
+
+  const sectionHeader = {
+    title: 'All your resources at one place',
+  };
 
   return (
-
-    useEffect(() => {
-      let ignore = false;
-      if (!ignore)  fetchAll()
-      return () => { ignore = true; }
-    },[]),
-
     <section
       {...props}
-      className={outerClasses}>
+      className={outerClasses}
+    >
+      <div className="container">
+        <div className={innerClasses}>
+        <SectionHeader data={sectionHeader} className="center-content" />
+          <div className={tilesClasses}>
 
-      <h1>Notes Page</h1>
+            <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+            <Link to={{
+                  pathname: "/DisplayPage",
+                  state: { title: "Engineering Notes", dbName: "engineering_notes"}
+              }}>
+              <div className="tiles-item-inner">
+                <div className="features-tiles-item-header">
+                  <div className="features-tiles-item-image mb-16">
+                    <Image
+                      style={styles.icon}
+                      src={require("./../myImages/engineer_icon.png")}
+                      width={64}
+                      height={64} />
+                  </div>
+                </div>
+                <div className="features-tiles-item-content">
+                  <h4 className="mt-0 mb-8">
+                    Engineering
+                    </h4>
+                  <p className="m-0 text-sm">
+                    Engineering Notes
+                  </p>
+                </div>
+              </div>
+              </Link>
+            </div>
 
-          <div className="innerClasses">
-              <table style={styles.table}>
-                  <tr>
-                      <th style={styles.th}>Name</th>
-                      <th style={styles.th}>Download</th>
-                  </tr>
+            <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+            <Link to={{
+                  pathname: "/DisplayPage",
+                  state: { title: "Pharmacy Notes", dbName: "pharmacy_notes"}
+              }}>
+              <div className="tiles-item-inner">
+                <div className="features-tiles-item-header">
+                  <div className="features-tiles-item-image mb-16">
+                    <Image
+                      style={styles.icon}
+                      src={require("./../myImages/pharmacy_icon.png")}
+                      width={64}
+                      height={64} />
+                  </div>
+                </div>
+                <div className="features-tiles-item-content">
+                  <h4 className="mt-0 mb-8">
+                    Pharmacy
+                    </h4>
+                  <p className="m-0 text-sm">
+                    Pharmacy Notes
+                  </p>
+                </div>
+              </div>
+              </Link>
+            </div>
 
-              {allDocs.map(function(a) {
-               return (
-                  <tr>
-                    <td>{a.name}</td>
-                    <Link to= {{ pathname: a.url }} target="_blank">
-                      <Image
-                        src={require('../assets/images/download-icon.png')}
-                        alt="icon1"
-                        width={35}
-                        height={35}/>
-                      </Link>
-                  </tr>
-               );
-              })}
-              </table>
+            <div style={styles.myborder} className="tiles-item reveal-from-bottom" data-reveal-delay="400">
+            <Link to={{
+                  pathname: "/DisplayPage",
+                  state: { title: "BBA Notes", dbName: "bba_notes"}
+              }}>
+              <div className="tiles-item-inner">
+                <div className="features-tiles-item-header">
+                  <div className="features-tiles-item-image mb-16">
+                    <Image
+                      style={styles.icon}
+                      src={require("./../myImages/bba_icon.png")}
+                      width={64}
+                      height={64} />
+                  </div>
+                </div>
+                <div className="features-tiles-item-content">
+                  <h4 className="mt-0 mb-8">
+                    BBA
+                    </h4>
+                  <p className="m-0 text-sm">
+                    BBA Notes
+                  </p>
+                </div>
+              </div>
+              </Link>
+            </div>
+
+            <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+            <Link to={{
+                  pathname: "/DisplayPage",
+                  state: { title: "Law Notes", dbName: "law_notes"}
+              }}>
+              <div className="tiles-item-inner">
+                <div className="features-tiles-item-header">
+                  <div className="features-tiles-item-image mb-16">
+                    <Image
+                      style={styles.icon}
+                      src={require("./../myImages/law_icon.png")}
+                      width={64}
+                      height={64} />
+                  </div>
+                </div>
+                <div className="features-tiles-item-content">
+                  <h4 className="mt-0 mb-8">
+                    Law
+                    </h4>
+                  <p className="m-0 text-sm">
+                    Law Notes
+                  </p>
+                </div>
+              </div>
+              </Link>
+            </div>
+
+            <div style={styles.myborder} className="tiles-item reveal-from-bottom">
+            <Link to={{
+                  pathname: "/DisplayPage",
+                  state: { title: "Other Courses Notes", dbName: "other_notes"}
+              }}>
+              <div className="tiles-item-inner">
+                <div className="features-tiles-item-header">
+                  <div className="features-tiles-item-image mb-16">
+                    <Image
+                      style={styles.icon}
+                      src={require("./../myImages/other_icon.png")}
+                      width={64}
+                      height={64} />
+                  </div>
+                </div>
+                <div className="features-tiles-item-content">
+                  <h4 className="mt-0 mb-8">
+                    Other Courses
+                    </h4>
+                  <p className="m-0 text-sm">
+                    Notes for other courses
+                  </p>
+                </div>
+              </div>
+              </Link>
+            </div>
+
           </div>
-
-      </section>
-
+        </div>
+      </div>
+    </section>
   );
 }
 
