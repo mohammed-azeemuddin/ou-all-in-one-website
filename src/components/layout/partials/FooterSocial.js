@@ -11,6 +11,14 @@ const FooterSocial = ({
     className
   );
 
+  const styles = {
+    icon: {
+      color: '#6163FF',
+      fontSize: '20px',
+      paddingTop: '5px'
+    }
+  }
+
   return (
     <div
       {...props}
@@ -34,6 +42,11 @@ const FooterSocial = ({
               </g>
             </svg>
           </a>
+          </li>
+          <li>
+            <a href="https://t.me/ouallinone/">
+            <i class="fab fa-telegram" aria-hidden="true" style={styles.icon}></i>
+            </a>
           </li>
       </ul>
     </div>

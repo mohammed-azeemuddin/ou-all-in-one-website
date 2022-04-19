@@ -9,7 +9,7 @@ import './ModifiedStyles.css';
 
 const styles = {
   playstoreIcon:{
-    fontSize: '24px'
+    fontSize: '24px',
   }
 }
 
@@ -80,10 +80,9 @@ const Hero = ({
                     <i class="fab fa-google-play" style={styles.playstoreIcon}></i>&nbsp;&nbsp;Download App
                     </Button>
 
-                  {/*
-                    <Button tag="a" color="dark" wideMobile href="https://github.com/cruip/open-react-template/">
-                      View on Github
-                    </Button>*/}
+                    <Button tag="a" color="primary" wideMobile href="htts://t.me/ouallinone">
+                      <i class="fab fa-telegram" aria-hidden="true" style={styles.playstoreIcon}></i>&nbsp;&nbsp; Join TG channel (for job updates)
+                    </Button>
 
                 </ButtonGroup>
               </div>

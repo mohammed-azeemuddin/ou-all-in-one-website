@@ -118,6 +118,12 @@ const Header = ({
                       <Link to="/Notes" onClick={closeMenu}>Notes</Link>
                     </li>
                     <li>
+                      <Link to="/Labs" onClick={closeMenu}>Labs</Link>
+                    </li>
+                    <li>
+                      <Link to="/Placements" onClick={closeMenu}>Placements</Link>
+                    </li>
+                    <li>
                       <Link to="/About" onClick={closeMenu}>About</Link>
                     </li>
                   </ul>
