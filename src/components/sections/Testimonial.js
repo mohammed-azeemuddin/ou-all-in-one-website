@@ -80,7 +80,7 @@ const Testimonial = ({
                 <div className="testimonial-item-content">
                   <p className="text-sm mb-0">
                     — Quite useful app specifically considering the current situation . Appreciable work by the app developer
-                      </p>
+                  </p>
                 </div>
                 <div className="testimonial-item-footer text-xs mt-32 mb-0 has-top-divider">
                   <span className="testimonial-item-name text-color-high">Abdul Rafae</span>
