@@ -44,7 +44,7 @@ const Header = ({
       document.removeEventListener('click', clickOutside);
       closeMenu();
     };
-  });  
+  });
 
   const openMenu = () => {
     document.body.classList.add('off-nav-is-active');
@@ -66,7 +66,7 @@ const Header = ({
     if (!nav.current) return
     if (!isActive || nav.current.contains(e.target) || e.target === hamburger.current) return;
     closeMenu();
-  }  
+  }
 
   const classes = classNames(
     'site-header',
@@ -112,9 +112,16 @@ const Header = ({
                       navPosition && `header-nav-${navPosition}`
                     )}>
                     <li>
-                      <Link to="#0" onClick={closeMenu}>Documentation</Link>
+                      <Link to="/QuestionPapers" onClick={closeMenu}>Previous Question Papers</Link>
+                    </li>
+                    <li>
+                      <Link to="/Notes" onClick={closeMenu}>Notes</Link>
+                    </li>
+                    <li>
+                      <Link to="/About" onClick={closeMenu}>About</Link>
                     </li>
                   </ul>
+                  {/*
                   {!hideSignin &&
                     <ul
                       className="list-reset header-nav-right"
@@ -122,7 +129,7 @@ const Header = ({
                       <li>
                         <Link to="#0" className="button button-primary button-wide-mobile button-sm" onClick={closeMenu}>Sign up</Link>
                       </li>
-                    </ul>}
+                    </ul>}*/}
                 </div>
               </nav>
             </>}

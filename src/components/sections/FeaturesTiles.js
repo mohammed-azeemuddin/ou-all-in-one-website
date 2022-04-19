@@ -4,7 +4,7 @@ import { SectionTilesProps } from '../../utils/SectionProps';
 import SectionHeader from './partials/SectionHeader';
 import Image from '../elements/Image';
 import './ModifiedStyles.css';
-import { Link , useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const styles = {
   myborder:{

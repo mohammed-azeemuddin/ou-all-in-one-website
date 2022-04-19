@@ -4,7 +4,7 @@ import { SectionTilesProps } from '../utils/SectionProps';
 import Image from '../components/elements/Image';
 import '../components/sections/ModifiedStyles.css';
 import SectionHeader from '../components/sections/partials/SectionHeader';
-import { Link , useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const styles = {
   myborder:{
@@ -57,7 +57,6 @@ const Notes = ({
     pushLeft && 'push-left'
   );
 
-  const image_url = './myImages/download-icon.png';
 
   const sectionHeader = {
     title: 'All your resources at one place',

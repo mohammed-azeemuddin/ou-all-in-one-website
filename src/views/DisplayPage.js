@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 import firebase from './Firebase';
 import classNames from 'classnames';
 import { SectionProps } from '../utils/SectionProps';
-import { Link , useLocation , useParams } from 'react-router-dom';
+import { Link , useLocation } from 'react-router-dom';
 import "./DisplayPage.css";
-// <td onClick={download(a.url)}>
-
 
 const propTypes = {
   ...SectionProps.types
@@ -54,14 +52,13 @@ const DisplayPage = (
   const [notes, setNotes] = useState([]);
   const [search, setSearch] = useState("");
   const [filteredNotes, setFilteredNotes] = useState([]);
+
   const location = useLocation();
   const title = location.state.title;
   const dbName = location.state.dbName;
 
-  console.log(location.state);
 
   useEffect(() => {
-
     const fetchData = async () => {
       const data =
        await db.collection(dbName)
