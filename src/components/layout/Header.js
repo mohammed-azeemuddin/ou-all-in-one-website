@@ -123,6 +123,12 @@ const Header = ({
                     <li>
                       <Link to="/Placements" onClick={closeMenu}>Placements</Link>
                     </li>
+                    <li>
+                      <Link to="/PrivacyPolicy" onClick={closeMenu}>Privacy Policy</Link>
+                    </li>
+                    <li>
+                      <Link to="/ContactUs" onClick={closeMenu}>Contact Us</Link>
+                    </li>
                   </ul>
                   {/*
                   {!hideSignin &&
