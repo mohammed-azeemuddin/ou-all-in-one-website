@@ -45,7 +45,7 @@ input[type=text] {
   border: 1px solid grey;
   border-radius: 10px 0 0 10px;
   background: #f1f1f1;
-  width: 55%;
+  width: 40%;
 }
 
 button {
@@ -57,7 +57,7 @@ button {
   border-radius: 0 10px 10px 0;
   border-left: none;
   cursor: pointer;
-  width: 15%
+  width: 10%;
 }
 
 button:hover {

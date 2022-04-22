@@ -3,6 +3,8 @@ import firebase from './Firebase';
 import classNames from 'classnames';
 import { SectionProps } from '../utils/SectionProps';
 import { Link , useLocation} from 'react-router-dom';
+import { collection, getDocs } from "firebase/firestore";
+
 
 const propTypes = {
   ...SectionProps.types
@@ -22,6 +24,23 @@ const styles = {
   },
   input: {
     width: '75%'
+  },
+  table:{
+    width: '75%',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    border: '1px groove white',
+    marginTop: '20px'
+  },
+  th:{
+    textAlign:'center'
+  },
+  fi: {
+    width:'50%'
+  },
+  myborder:{
+    border: '1px solid white',
+    margin: '10px 15% 10px 15%'
   }
 }
 
@@ -55,18 +74,59 @@ const SubmissionProcess = (
     const [resourceName, setResourceName] = useState("");
     const [resourceUrl, setResourceUrl] = useState("");
 
-    const handleSubmit = (e) => {
+    const [searchName,setSearchName] = useState("");
+    const [filteredNotes, setFilteredNotes] = useState([]);
+    const [notes, setNotes] = useState([]);
 
+    const [html, setHtml] = useState(null);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        const data =
+         await db.collection("engineering_notes")
+                 .orderBy("name")
+                 .get();
+        setNotes(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+      };
+      fetchData();
+    }, []);
+
+
+    const handleSubmit = (e) => {
       e.preventDefault();
       db.collection(dbName).add({
         name: resourceName,
         url: resourceUrl,
       });
-
       setResourceName("");
       setResourceUrl("");
-
     };
+
+    const renderHtml = (e) => {
+      e.preventDefault();
+      return(
+        <div>
+        <ul style={styles.ul}>
+          <li style={styles.para} class="para-small ta-l text-color-secondary">There are some similar resources that have already submitted!</li>
+              {filteredNotes.map(function(note) {
+               return (
+                    <li style={styles.para}>{note.name}</li>
+               );
+              })}
+          <li style={styles.para} class="para-small ta-l text-color-secondary"> If your believe your submission is different from all of these, please ignore this message and continue.</li>
+        </ul>
+        </div>
+      )
+    }
+
+    useEffect(() => {
+      setFilteredNotes(
+        notes.filter(
+          (note) =>
+            note.name.toLowerCase().startsWith((searchName.toLowerCase())))
+      );
+      console.log(filteredNotes);
+    }, [searchName, notes]);
 
   return (
     <section
@@ -93,29 +153,37 @@ const SubmissionProcess = (
                   <li style={styles.para} class="para-small ta-l text-color-secondary"><u>How to submit?</u></li>
                   <li style={styles.para} class="para-small ta-l"><b>You are supposed to put all your file/files in a Google Drive Folder and paste it's link in the "Enter URL" input box in the form.</b></li>
                   <li style={styles.para} class="para-small ta-l"><b>Please make sure the link you are pasting is shareable with everyone and you have turned Link sharing on</b></li>
-                  <li style={styles.para} class="para-small ta-l text-color-secondary"><a href="https://www.youtube.com/watch?v=7Gwf4vD6yog"><u>How to make google drive links shareable with everyone</u></a></li>
+                  <li style={styles.para} class="para-small ta-l text-color-secondary"><a href="https://www.youtube.com/watch?v=7Gwf4vD6yog"><u>How to make google drive links shareable with everyone (Watch)</u></a></li>
+                  </ul>
+                  <br/>
 
-                  <br/><br/>
-                  <div className="App__form">
-                      <input
-                        type="text"
-                        placeholder="Full Name of the resource (Notes/Papers/Manuals)"
-                        value={resourceName}
-                        onChange={(e) => setResourceName(e.target.value)}
-                      />
-                      <br/><br/>
-                      <input
-                        type="text"
-                        placeholder="Enter URL of the resource"
-                        value={resourceUrl}
-                        onChange={(e) => setResourceUrl(e.target.value)}
-                      />
-                      <button onClick={handleSubmit}>Submit</button>
-                </div>
+                  <div style={styles.myborder}>
+                      <h6>Please enter the full name of the subject/resource down below.</h6>
+                      <h6>This is to check if there are any previous similar submissions and avoid duplicacy.</h6>
+                      <form onSubmit={(e) => setHtml(renderHtml(e))}>
+                          <input
+                            style={styles.fi}
+                            required
+                            type="text"
+                            placeholder="Full Name of the resource (Notes/Papers/Manuals)"
+                            value={resourceName}
+                            onChange={function(e){setResourceName(e.target.value); setSearchName(e.target.value) }}
+                            />
+                            <button type="submit">Check</button>
+                          </form>
+                      {html}
 
+                      <div className="App__form">
+                          <input
+                            type="text"
+                            placeholder="Enter URL of the resource"
+                            value={resourceUrl}
+                            onChange={(e) => setResourceUrl(e.target.value)}
+                          />
+                          <br/><br/>
+                      </div>
+                  </div>
 
-
-                </ul>
           </div>
       </section>
   );
