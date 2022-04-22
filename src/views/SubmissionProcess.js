@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { SectionProps } from '../utils/SectionProps';
 import { Link , useLocation} from 'react-router-dom';
 import { collection, getDocs } from "firebase/firestore";
+import isURL from 'validator/lib/isURL';
 
 
 const propTypes = {
@@ -36,11 +37,10 @@ const styles = {
     textAlign:'center'
   },
   fi: {
-    width:'50%'
+    width:'70%'
   },
   myborder:{
     border: '1px solid white',
-    margin: '10px 15% 10px 15%'
   }
 }
 
@@ -79,11 +79,20 @@ const SubmissionProcess = (
     const [notes, setNotes] = useState([]);
 
     const [html, setHtml] = useState(null);
+    const [err, setErr] = useState('');
+
+   const validate = (e) => {
+      if (!isURL(resourceUrl)) {
+         setErr('Invalid URL, please check again!');
+      } else {
+        setErr('Valid URL');
+      }
+   };
 
     useEffect(() => {
       const fetchData = async () => {
         const data =
-         await db.collection("engineering_notes")
+         await db.collection(dbName)
                  .orderBy("name")
                  .get();
         setNotes(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
@@ -100,23 +109,28 @@ const SubmissionProcess = (
       });
       setResourceName("");
       setResourceUrl("");
+      window.location.href = "/SubmissionDone"
     };
 
     const renderHtml = (e) => {
       e.preventDefault();
       return(
         <div>
-        <ul style={styles.ul}>
-          <li style={styles.para} class="para-small ta-l text-color-secondary">There are some similar resources that have already submitted!</li>
-              {filteredNotes.map(function(note) {
-               return (
-                    <li style={styles.para}>{note.name}</li>
-               );
-              })}
-          <li style={styles.para} class="para-small ta-l text-color-secondary"> If your believe your submission is different from all of these, please ignore this message and continue.</li>
-        </ul>
+        { Object.keys(filteredNotes).length === 0 ? (
+            <h6><i> Yay! No similar submissions found. Go ahead </i></h6>
+        ) : (
+            <ul style={styles.ul}>
+              <li class="para-small text-color-secondary">There are some similar resources that have already been submitted!</li>
+                  {filteredNotes.map(function(note) {
+                   return (
+                        <li>{note.name}</li>
+                   );
+                  })}
+              <li class="para-small text-color-secondary"> If your believe your submission is different from all of these, please ignore this message and continue.</li>
+            </ul>
+        )}
         </div>
-      )
+      );
     }
 
     useEffect(() => {
@@ -158,8 +172,10 @@ const SubmissionProcess = (
                   <br/>
 
                   <div style={styles.myborder}>
+
                       <h6>Please enter the full name of the subject/resource down below.</h6>
-                      <h6>This is to check if there are any previous similar submissions and avoid duplicacy.</h6>
+                      <h6><i>This is to check if there are any previous similar submissions and avoid duplicacy.</i></h6>
+
                       <form onSubmit={(e) => setHtml(renderHtml(e))}>
                           <input
                             style={styles.fi}
@@ -174,16 +190,32 @@ const SubmissionProcess = (
                       {html}
 
                       <div className="App__form">
-                          <input
-                            type="text"
-                            placeholder="Enter URL of the resource"
-                            value={resourceUrl}
-                            onChange={(e) => setResourceUrl(e.target.value)}
-                          />
-                          <br/><br/>
+                        <form onSubmit={handleSubmit} action="/Home" method="GET">
+                            <input
+                              style={styles.fi}
+                              required
+                              type="text"
+                              placeholder="Full Name of the resource (Notes/Papers/Manuals)"
+                              value={resourceName}
+                              onChange={function(e) {setResourceName(e.target.value); setSearchName(e.target.value) }}
+                            />
+                            <br/>
+                            <input
+                              style={styles.fi}
+                              required
+                              type="text"
+                              placeholder="Enter URL of the resource"
+                              value={resourceUrl}
+                              onChange={function(e) {setResourceUrl(e.target.value); validate(e.target.value) }}
+                            />
+                            <p>{err}</p>
+                            <br/>
+                            <button type="submit">Submit</button>
+                          <br/>
+                        </form>
                       </div>
-                  </div>
 
+                  </div>
           </div>
       </section>
   );

@@ -11,7 +11,7 @@ const defaultProps = {
   ...SectionProps.defaults
 }
 
-const ContactUs = ({
+const PrivacyPolicy = ({
   className,
   topOuterDivider,
   bottomOuterDivider,
@@ -124,7 +124,7 @@ const ContactUs = ({
   );
 }
 
-ContactUs.propTypes = propTypes;
-ContactUs.defaultProps = defaultProps;
+PrivacyPolicy.propTypes = propTypes;
+PrivacyPolicy.defaultProps = defaultProps;
 
-export default ContactUs;
+export default PrivacyPolicy;

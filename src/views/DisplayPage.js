@@ -92,28 +92,32 @@ const DisplayPage = (
               <button><i class="fa fa-search"></i></button>
 
               <div className="table-wrapper">
-              <table style={styles.table} class="fl-table">
-                  <thead>
-                    <tr>
-                        <th style={styles.th}>Name</th>
-                        <th style={styles.th}>Download&nbsp;&nbsp;&nbsp;</th>
-                    </tr>
-                  </thead>
-              {filteredNotes.map(function(note) {
-               return (
-                 <tbody>
-                  <tr>
-                    <td>{note.name}</td>
-                    <Link to= {{ pathname: note.url }} target="_blank">
+              { Object.keys(filteredNotes).length === 0 ? (
+                <h6><i>Sorry! No matching data found</i></h6>
+              ) : (
+                    <table style={styles.table} class="fl-table">
+                        <thead>
+                          <tr>
+                              <th style={styles.th}>Name</th>
+                              <th style={styles.th}>Download&nbsp;&nbsp;&nbsp;</th>
+                          </tr>
+                        </thead>
+                    {filteredNotes.map(function(note) {
+                     return (
+                       <tbody>
+                        <tr>
+                          <td>{note.name}</td>
+                          <Link to= {{ pathname: note.url }} target="_blank">
 
-                      <i class="fa fa-arrow-down popout"  aria-hidden="true"></i>
+                            <i class="fa fa-arrow-down popout"  aria-hidden="true"></i>
 
-                    </Link>
-                  </tr>
-                  </tbody>
-               );
-              })}
-              </table>
+                          </Link>
+                        </tr>
+                        </tbody>
+                     );
+                    })}
+                    </table>
+              )}
               </div>
           </div>
 
