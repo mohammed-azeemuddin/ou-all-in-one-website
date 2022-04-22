@@ -10,6 +10,11 @@
 	border: 0;
 }
 
+// different textsizes
+.para-small {
+	font-size: 15px;
+}
+
 // Reset lists style
 .list-reset {
 	list-style: none;
@@ -562,7 +567,7 @@ img.has-shadow {
 
 	.spacer-64-mobile {
 		padding-top: 64px;
-	}	
+	}
 }
 
 @include media( '>medium' ) {

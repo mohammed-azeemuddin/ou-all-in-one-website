@@ -17,6 +17,7 @@ import DisplayPage from './views/DisplayPage';
 import PrivacyPolicy from './views/PrivacyPolicy';
 import ContactUs from './views/ContactUs';
 import Submissions from './views/Submissions';
+import SubmissionProcess from './views/SubmissionProcess';
 
 // Initialize Google Analytics
 ReactGA.initialize(process.env.REACT_APP_GA_CODE);
@@ -53,6 +54,7 @@ const App = () => {
           <AppRoute exact path="/ContactUs" component={ContactUs} layout={LayoutDefault} />
           <AppRoute exact path="/PrivacyPolicy" component={PrivacyPolicy} layout={LayoutDefault} />
           <AppRoute exact path="/Submissions" component={Submissions} layout={LayoutDefault} />
+          <AppRoute exact path="/SubmissionProcess" component={SubmissionProcess} layout={LayoutDefault} />
         </Switch>
       )} />
   );
