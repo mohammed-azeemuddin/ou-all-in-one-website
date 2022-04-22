@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import classNames from 'classnames';
 import { SectionProps } from '../utils/SectionProps';
 import '../components/sections/ModifiedStyles.css';
+import Image from '../components/elements/Image';
 
 const propTypes = {
   ...SectionProps.types
@@ -57,8 +58,15 @@ const SubmissionDone = ({
       <div className="container-sm">
         <div className={innerClasses}>
           <div className="hero-content">
-          <h1>Submission Done</h1>
-
+          <h1>Thankyou for participating!</h1>
+          <h4>Your submission is done!</h4>
+          <h4>You can now go to <a href=""><u class="text-color-secondary">this</u></a> post and comment for getting a chance to be a winner!</h4>
+          <Image
+              src={require('../assets/images/applause.png')}
+              alt="Open"
+              width={400}
+              height={400}
+          />
       </div>
         </div>
       </div>

@@ -5,6 +5,8 @@ import { SectionProps } from '../utils/SectionProps';
 import { Link , useLocation} from 'react-router-dom';
 import { collection, getDocs } from "firebase/firestore";
 import isURL from 'validator/lib/isURL';
+import Checkbox from '../components/elements/Checkbox';
+import { useHistory } from "react-router-dom";
 
 
 const propTypes = {
@@ -41,6 +43,10 @@ const styles = {
   },
   myborder:{
     border: '1px solid white',
+  },
+  submit : {
+    borderRadius: '10px 10px 10px 10px',
+    width: '20%'
   }
 }
 
@@ -81,6 +87,8 @@ const SubmissionProcess = (
     const [html, setHtml] = useState(null);
     const [err, setErr] = useState('');
 
+    let history = useHistory();
+
    const validate = (e) => {
       if (!isURL(resourceUrl)) {
          setErr('Invalid URL, please check again!');
@@ -109,7 +117,8 @@ const SubmissionProcess = (
       });
       setResourceName("");
       setResourceUrl("");
-      window.location.href = "/SubmissionDone"
+
+      history.push("/SubmissionDone")
     };
 
     const renderHtml = (e) => {
@@ -190,7 +199,7 @@ const SubmissionProcess = (
                       {html}
 
                       <div className="App__form">
-                        <form onSubmit={handleSubmit} action="/Home" method="GET">
+                        <form onSubmit={handleSubmit}>
                             <input
                               style={styles.fi}
                               required
@@ -210,7 +219,9 @@ const SubmissionProcess = (
                             />
                             <p>{err}</p>
                             <br/>
-                            <button type="submit">Submit</button>
+                            <Checkbox required/>I have made the Google Drive Link setting as "Anyone with the link can view"
+                            <br/><br/>
+                            <button style={styles.submit} type="submit">Submit</button>
                           <br/>
                         </form>
                       </div>

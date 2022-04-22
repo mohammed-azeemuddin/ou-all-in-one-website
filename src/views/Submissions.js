@@ -45,8 +45,8 @@ const Submissions = (
     <section
       {...props}
       className={outerClasses}>
-
-      <h1>Choose a section for Submission</h1>
+      <h1> SHAREITZA! </h1>
+      <h4>Choose a section for Submission</h4>
             <div className="innerClasses">
               <p class="text-color-secondary"> We are not accepting any Engineering Notes right now. We already have a huge list of them available for everyone.<br/>No Engineering notes will be considered.</p>
               <ol style={styles.list}>
