@@ -1,0 +1,9 @@
+
+ol{
+  text-align: left;
+  color: white;
+}
+
+ol :hover {
+  background-color: #6163FF;
+}
