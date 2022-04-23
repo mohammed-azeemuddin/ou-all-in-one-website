@@ -122,7 +122,7 @@ const Hero = ({
             <div>
                 <div style={{ textAlign: "center" }}>
                <h2>Contests</h2>
-               <p class="text-color-secondary"><b>SHAREITZA</b> is a contest organized by the admin of OU All In One and aims at gathering resources for everyone in a fun way!</p>
+               <p><b>SHAREITZA</b> is a contest organized by the admin of OU All In One and aims at gathering resources for everyone in a fun way!</p>
                <p class="text-color-secondary"><b> 3 lucky winners will be selected from the comments of <a href=""><u>this</u></a> Instagram post.</b></p>
 
                <div style={{
