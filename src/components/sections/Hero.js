@@ -102,7 +102,7 @@ const Hero = ({
             </h1>
             <div className="container-xs">
               <p className="m-0 mb-32 reveal-from-bottom" data-reveal-delay="400">
-                  An all in one website for OU Students that consists of Previous Question Papers, Notes, Lab manuals and Placements.
+                  An all in one website for OU Students that consists of Previous Question Papers, Notes, Lab manuals and Placement updates.
               </p>
               <div className="reveal-from-bottom" data-reveal-delay="600">
                 <ButtonGroup>
