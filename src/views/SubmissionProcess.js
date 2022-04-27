@@ -146,7 +146,7 @@ const SubmissionProcess = (
       setFilteredNotes(
         notes.filter(
           (note) =>
-            note.name.toLowerCase().startsWith((searchName.toLowerCase())))
+            note.name.toLowerCase()..includes(search.toLowerCase()))
       );
       console.log(filteredNotes);
     }, [searchName, notes]);
