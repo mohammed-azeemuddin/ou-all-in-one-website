@@ -89,13 +89,13 @@ const SubmissionProcess = (
 
     let history = useHistory();
 
-   const validate = (e) => {
-      if (!isURL(resourceUrl)) {
-         setErr('Invalid URL, please check again!');
-      } else {
-        setErr('Valid URL');
-      }
-   };
+   // const validate = (e) => {
+   //    if (!isURL(resourceUrl)) {
+   //       setErr('Invalid URL, please check again!');
+   //    } else {
+   //      setErr('Valid URL');
+   //    }
+   // };
 
     useEffect(() => {
       const fetchData = async () => {
@@ -215,9 +215,8 @@ const SubmissionProcess = (
                               type="text"
                               placeholder="Enter URL of the resource"
                               value={resourceUrl}
-                              onChange={function(e) {setResourceUrl(e.target.value); validate(e.target.value) }}
+                              onChange={function(e) { setResourceUrl(e.target.value); }}
                             />
-                            <p>{err}</p>
                             <br/>
                             <Checkbox required/>I have made the Google Drive Link setting as "Anyone with the link can view"
                             <br/><br/>
