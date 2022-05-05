@@ -60,7 +60,7 @@ const SubmissionDone = ({
           <div className="hero-content">
           <h1>Thankyou for participating!</h1>
           <h4>Your submission is done!</h4>
-          <h4>You can now go to <a href="https://www.instagram.com/p/CcsIawbv9xO/?igshid=YmMyMTA2M2Y="><u class="text-color-secondary">this</u></a> post and comment for getting a chance to be a winner!</h4>
+          <h4>You can now go to <a href="https://www.instagram.com/p/CdLwFjyPObc/"><u class="text-color-secondary">this</u></a> post and comment for getting a chance to be a winner!</h4>
           <Image
               src={require('../assets/images/applause.png')}
               alt="Open"
