@@ -110,6 +110,7 @@ const SubmissionProcess = (
 
 
     const handleSubmit = (e) => {
+      
       e.preventDefault();
       db.collection(dbName).add({
         name: resourceName,

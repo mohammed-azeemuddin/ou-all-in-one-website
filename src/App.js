@@ -19,6 +19,7 @@ import ContactUs from './views/ContactUs';
 import Submissions from './views/Submissions';
 import SubmissionProcess from './views/SubmissionProcess';
 import SubmissionDone from './views/SubmissionDone';
+import SubmissionClosed from './views/SubmissionClosed';
 
 // Initialize Google Analytics
 ReactGA.initialize(process.env.REACT_APP_GA_CODE);
@@ -57,6 +58,7 @@ const App = () => {
           <AppRoute exact path="/Submissions" component={Submissions} layout={LayoutDefault} />
           <AppRoute exact path="/SubmissionProcess" component={SubmissionProcess} layout={LayoutDefault} />
           <AppRoute exact path="/SubmissionDone" component={SubmissionDone} layout={LayoutDefault} />
+          <AppRoute exact path="/SubmissionClosed" component={SubmissionClosed} layout={LayoutDefault} />
         </Switch>
       )} />
   );

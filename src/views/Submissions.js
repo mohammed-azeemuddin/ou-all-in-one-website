@@ -82,8 +82,8 @@ const Submissions = (
                 </Link>
 
                 <Link to={{
-                    pathname: "/SubmissionProcess",
-                    state: { title: "Previous Pharmacy Question Papers Submission", dbName: "pharmacy_qp"}}}>
+                    pathname: "/SubmissionClosed"
+                  }}>
                 <li>Previous Pharmacy Question Papers (2019-current)</li>
                 </Link>
 
@@ -103,6 +103,12 @@ const Submissions = (
                     pathname: "/SubmissionProcess",
                     state: { title: "Previous Other Stream Question Papers Submission", dbName: "other_qp"}}}>
                 <li>Previous Other Stream Question Papers (2019-current) (B.Sc,B.Com,etc...)</li>
+                </Link>
+
+                <Link to={{
+                    pathname: "/SubmissionProcess",
+                    state: { title: "Lab Manuals Submission", dbName: "lab_manuals"}}}>
+                <li>Lab Manuals Submission (any)</li>
                 </Link>
 
               </ol>
