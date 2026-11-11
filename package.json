@@ -1,44 +1,21 @@
 {
-  "name": "ou-all-in-one",
-  "version": "0.1.0",
+  "name": "ou-all-in-one-website",
+  "version": "2.0.0",
   "private": true,
-  "dependencies": {
-    "classnames": "^2.2.6",
-    "firebase": "^9.6.11",
-    "lodash": "^4.17.15",
-    "react": "^16.13.1",
-    "react-carousel-minimal": "^1.4.1",
-    "react-dom": "^16.13.1",
-    "react-ga": "^2.7.0",
-    "react-router": "^5.3.1",
-    "react-router-dom": "^5.3.1",
-    "react-scripts": "^3.4.1",
-    "sass": "^1.49.7",
-    "validator": "^13.7.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cruip/open-react-template.git"
-  },
+  "type": "module",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "vite",
+    "folders": "node scripts/build-folders.mjs",
+    "build": "node scripts/build-folders.mjs && vite build && node --experimental-strip-types --no-warnings scripts/prerender.mjs",
+    "preview": "vite preview"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.28.0"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.4",
+    "vite": "5.4.11"
   }
 }

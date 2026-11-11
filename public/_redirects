@@ -1,0 +1,14 @@
+# Old 2022 addresses
+/QuestionPapers   /papers    301
+/Notes            /notes     301
+/Labs             /labs      301
+/Placements       /placements 301
+/ContactUs        /contact   301
+/PrivacyPolicy    /privacy.html 301
+/DisplayPage      /          301
+/Submissions      /contact   301
+/SubmissionProcess /contact  301
+/SubmissionDone   /contact   301
+/SubmissionClosed /contact   301
+# Single-page app: every other address loads the app (real files such as /privacy.html are served first)
+/*    /index.html   200
