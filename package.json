@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "folders": "node scripts/build-folders.mjs",
-    "build": "node scripts/build-folders.mjs && vite build && node --experimental-strip-types --no-warnings scripts/prerender.mjs",
+    "placements": "node scripts/build-placements.mjs",
+    "verify:placements": "node scripts/verify-code.mjs",
+    "build": "node scripts/build-folders.mjs && node scripts/build-placements.mjs && vite build && node --experimental-strip-types --no-warnings scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

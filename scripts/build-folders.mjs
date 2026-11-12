@@ -7,22 +7,15 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-const PROJECT = 'ou-all-in-one-83b53';
-const KEY = 'AIzaSyAGs_fbwAPvlvTstHiFsZVffkA1SNcJpCI';
+import { collectionDocs } from './lib/firestore.mjs';
+
 const COLLECTIONS = ['engineering', 'pharmacy', 'bba', 'law', 'other'].map((c) => `${c}_notes`).concat(['lab_manuals']);
 const FOLDER_RE = /drive\.google\.com\/drive\/(?:mobile\/)?(?:u\/\d+\/)?folders\/([\w-]{10,})/;
 const ENTRY = /class="flip-entry" id="entry-([\w-]+)"[\s\S]*?href="([^"]+)"[\s\S]*?\/type\/([^"]+)"[\s\S]*?flip-entry-title">([^<]*)</g;
 const decode = (s) => s.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 
 async function docs(name) {
-  const out = [];
-  let token = '';
-  do {
-    const r = await (await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/${name}?pageSize=1000&key=${KEY}${token ? `&pageToken=${token}` : ''}`)).json();
-    for (const d of r.documents ?? []) out.push(d.fields?.url?.stringValue ?? '');
-    token = r.nextPageToken ?? '';
-  } while (token);
-  return out;
+  return (await collectionDocs(name)).map((d) => d.fields?.url?.stringValue ?? '');
 }
 
 async function list(id) {

@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 
-import { CONTACT_EMAIL, PLAY_URL, TELEGRAM_URL } from '../lib/courses';
+import { APP_STORE_URL, CONTACT_EMAIL, PLAY_URL, TELEGRAM_URL } from '../lib/courses';
+
+/** iPhone and iPad visitors get the App Store; everyone else gets Google Play. */
+const isApple = () => typeof navigator !== 'undefined' && !/Android/i.test(navigator.userAgent) && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+export const appUrl = () => (APP_STORE_URL && isApple() ? APP_STORE_URL : PLAY_URL);
 
 /** Adds `is-in` when the element scrolls into view (once). Respects reduced motion via CSS. */
 export function Reveal({ as: Tag = 'div', delay = 0, className = '', children, ...rest }) {
@@ -50,6 +54,35 @@ const NAV = [
   ['/tools', 'Tools'],
 ];
 
+const THEMES = ['system', 'light', 'dark'];
+const THEME_LABEL = { system: 'Theme: same as device', light: 'Theme: light', dark: 'Theme: dark' };
+const THEME_ICON = { system: '◐', light: '☀', dark: '☾' };
+
+/** Cycles System → Light → Dark. Saved in this browser; index.html applies it before first paint. */
+export function ThemeButton() {
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('ou-theme') || 'system';
+    } catch {
+      return 'system';
+    }
+  });
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('ou-theme', theme);
+    } catch {}
+  }, [theme]);
+  const next = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+  return (
+    <button className="theme-btn" onClick={() => setTheme(next)} aria-label={`${THEME_LABEL[theme]}. Switch to ${next}.`} title={THEME_LABEL[theme]}>
+      <span aria-hidden="true">{THEME_ICON[theme]}</span>
+    </button>
+  );
+}
+
 export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -64,7 +97,7 @@ export function Header() {
     return () => window.removeEventListener('scroll', on);
   }, []);
   return (
-    <header className={`site-header ${scrolled ? 'is-scrolled' : ''} ${pathname === '/' ? 'on-hero' : ''}`}>
+    <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="wrap header-row">
         <Link to="/" className="brand" aria-label="OU All In One home">
           <span className="brand-mark">
@@ -78,10 +111,11 @@ export function Header() {
               {label}
             </NavLink>
           ))}
-          <a className="btn btn-small nav-cta" href={PLAY_URL} target="_blank" rel="noreferrer">
+          <a className="btn btn-small nav-cta" href={appUrl()} target="_blank" rel="noreferrer">
             Get the app
           </a>
         </nav>
+        <ThemeButton />
         <button className="menu-btn" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           <span />
           <span />
@@ -116,6 +150,7 @@ export function Footer() {
           <a href="/privacy.html">Privacy policy</a>
           <a href={TELEGRAM_URL} target="_blank" rel="noreferrer">Telegram</a>
           <a href={PLAY_URL} target="_blank" rel="noreferrer">Android app</a>
+          <a href={APP_STORE_URL} target="_blank" rel="noreferrer">iPhone app</a>
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
         </div>
       </div>

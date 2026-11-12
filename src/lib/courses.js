@@ -13,6 +13,6 @@ export const collectionFor = (section, course) => `${course}_${SECTIONS[section]
 export const courseById = (id) => COURSES.find((c) => c.id === id);
 export const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.azeem.ou_app2';
 export const TELEGRAM_URL = 'https://t.me/ouallinone';
-/** Fill in once the iPhone app is live on the App Store; until then the button says "coming soon". */
-export const APP_STORE_URL = '';
+/** iPhone app "OU Notes,Papers,Lab,Placements" (live since 11 Nov 2026). */
+export const APP_STORE_URL = 'https://apps.apple.com/in/app/ou-notes-papers-lab-placements/id6833496974';
 export const CONTACT_EMAIL = 'ouallinone@gmail.com';

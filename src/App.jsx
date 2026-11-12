@@ -3,7 +3,8 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 
 import { Footer, Header } from './components/ui';
 import Home from './pages/Home';
-import { Contact, CourseList, Folder, Labs, NotFound, Placements, SearchPage, Section, SubjectPage, Tools, Viewer } from './pages/Pages';
+import { Contact, CourseList, Folder, Labs, NotFound, SearchPage, Section, SubjectPage, Tools, Viewer } from './pages/Pages';
+import { PrepCompanies, PrepCompany, PrepGroup, PrepHub, PrepMock, PrepTopic } from './pages/Prep';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -25,7 +26,12 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/notes/:course" element={<CourseList section="notes" />} />
           <Route path="/labs" element={<Labs />} />
-          <Route path="/placements" element={<Placements />} />
+          <Route path="/placements" element={<PrepHub />} />
+          <Route path="/placements/companies" element={<PrepCompanies />} />
+          <Route path="/placements/companies/:id" element={<PrepCompany />} />
+          <Route path="/placements/mock/:id" element={<PrepMock />} />
+          <Route path="/placements/:group" element={<PrepGroup />} />
+          <Route path="/placements/:group/:topic" element={<PrepTopic />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/view/:id" element={<Viewer />} />

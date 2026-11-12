@@ -1,0 +1,38 @@
+/**
+ * Operating Systems MCQs (original).
+ * Rows: [question, code|null, correct, wrong1, wrong2, wrong3, explanation, topic]
+ */
+export const OS = [
+  ['What is the main job of an operating system?', null, 'Manage hardware resources and provide services to programs', 'Compile source code', 'Design web pages', 'Store only files', 'The OS sits between hardware and applications and manages CPU, memory, devices and files.', 'Basics'],
+  ['The core part of the OS that stays in memory and controls everything is the:', null, 'Kernel', 'Shell', 'Compiler', 'BIOS', 'The kernel handles processes, memory, devices and system calls.', 'Basics'],
+  ['A program in execution is called a:', null, 'Process', 'File', 'Thread pool', 'Library', 'A process is a running program with its own address space and state.', 'Processes'],
+  ['Which is NOT a standard process state?', null, 'Compiled', 'Ready', 'Running', 'Waiting', 'Typical states: new, ready, running, waiting (blocked), terminated.', 'Processes'],
+  ['Where does the OS keep information about a process such as its state, program counter and registers?', null, 'Process Control Block (PCB)', 'Page table only', 'File allocation table', 'Boot sector', 'Each process has a PCB.', 'Processes'],
+  ['Saving the state of one process and loading another is called:', null, 'Context switching', 'Paging', 'Spooling', 'Thrashing', 'A context switch saves and restores CPU state.', 'Processes'],
+  ['Threads of the same process share:', null, 'Code, data and open files', 'Their stacks', 'Their program counters', 'Their registers', 'Each thread has its own stack, registers and PC but shares the address space.', 'Processes'],
+  ['Which scheduling algorithm can cause starvation of long jobs?', null, 'Shortest Job First (SJF)', 'First Come First Served (FCFS)', 'Round Robin', 'None of these', 'Short jobs keep jumping ahead, so long jobs may wait forever.', 'Scheduling'],
+  ['Round Robin scheduling gives each process:', null, 'A fixed time slice (quantum) in turn', 'The CPU until it finishes', 'Priority by size', 'CPU time at random', 'Processes take turns using a time quantum.', 'Scheduling'],
+  ['Three jobs arrive at time 0 with burst times 5, 3 and 8 (in that order). What is the average waiting time under FCFS?', null, '4.33', '3', '5.33', '6', 'Waiting times are 0, 5 and 8; average = 13/3 ≈ 4.33.', 'Scheduling'],
+  ['Same jobs (bursts 5, 3, 8, all at time 0) under non-preemptive SJF. What is the average waiting time?', null, '3.67', '4.33', '3', '5', 'Order 3, 5, 8: waiting 0, 3, 8; average = 11/3 ≈ 3.67.', 'Scheduling'],
+  ['Which is NOT one of the four necessary conditions for deadlock?', null, 'Preemption', 'Mutual exclusion', 'Hold and wait', 'Circular wait', 'The four conditions are mutual exclusion, hold and wait, no preemption and circular wait.', 'Deadlocks'],
+  ['The Banker\'s algorithm is used for:', null, 'Deadlock avoidance', 'Disk scheduling', 'Page replacement', 'CPU scheduling', 'It grants resources only if the system stays in a safe state.', 'Deadlocks'],
+  ['A situation where a process waits indefinitely because others keep getting priority is:', null, 'Starvation', 'Deadlock', 'Thrashing', 'Fragmentation', 'Starvation is indefinite postponement; ageing fixes it.', 'Deadlocks'],
+  ['A semaphore is used for:', null, 'Synchronising access to shared resources', 'Allocating disk blocks', 'Translating addresses', 'Compiling programs', 'Semaphores use wait (P) and signal (V) operations.', 'Synchronisation'],
+  ['A part of a program that accesses shared data and must not run in more than one process at a time is the:', null, 'Critical section', 'Entry point', 'Kernel mode', 'Stack segment', 'Only one process at a time may be in its critical section.', 'Synchronisation'],
+  ['A binary semaphore is essentially the same as a:', null, 'Mutex lock', 'Counting semaphore', 'Page table', 'Monitor queue', 'It takes only the values 0 and 1.', 'Synchronisation'],
+  ['Dividing physical memory into fixed-size blocks called frames and logical memory into pages is:', null, 'Paging', 'Segmentation', 'Swapping', 'Spooling', 'Pages map onto frames through a page table.', 'Memory'],
+  ['Paging removes which kind of fragmentation?', null, 'External fragmentation', 'Internal fragmentation', 'Both kinds', 'Neither', 'Fixed-size frames remove external fragmentation, but the last page can waste space (internal).', 'Memory'],
+  ['A page fault occurs when:', null, 'The page a program needs is not in main memory', 'The disk is full', 'Two processes share a page', 'The CPU overheats', 'The OS must then load the page from disk.', 'Memory'],
+  ['When a system spends more time swapping pages than executing, it is called:', null, 'Thrashing', 'Spooling', 'Caching', 'Buffering', 'Too little memory per process causes constant page faults.', 'Memory'],
+  ['Virtual memory allows:', null, 'Programs larger than physical memory to run', 'Faster disk writes only', 'More CPU cores', 'Files to be encrypted', 'Only needed pages are kept in RAM; the rest stay on disk.', 'Memory'],
+  ['The TLB (Translation Lookaside Buffer) is used to:', null, 'Speed up virtual-to-physical address translation', 'Store files', 'Schedule processes', 'Detect deadlock', 'It caches recent page table entries.', 'Memory'],
+  ['Which page replacement algorithm can show Belady\'s anomaly?', null, 'FIFO', 'LRU', 'Optimal', 'LFU with ageing', 'With FIFO, adding frames can increase page faults.', 'Memory'],
+  ['Reference string 1, 2, 3, 1, 4, 2 with 3 frames under FIFO. How many page faults?', null, '4', '5', '6', '3', '1, 2, 3 are faults (3). 1 is a hit. 4 is a fault and replaces 1, the oldest: [4, 2, 3]. 2 is a hit. Total = 4.', 'Memory'],
+  ['A system call is:', null, 'A request from a program for a service from the kernel', 'A phone call from the system', 'A hardware fault', 'A compiler error', 'Examples: read, write, fork, exec.', 'Basics'],
+  ['In Unix/Linux, which system call creates a new process?', null, 'fork()', 'exec()', 'wait()', 'exit()', 'fork() duplicates the calling process; exec() replaces its program.', 'Processes'],
+  ['A child process whose parent has not yet collected its exit status is a:', null, 'Zombie process', 'Orphan process', 'Daemon', 'Kernel thread', 'Its entry stays until the parent calls wait().', 'Processes'],
+  ['Which disk scheduling algorithm moves the head in one direction serving requests, then reverses (like a lift)?', null, 'SCAN', 'FCFS', 'SSTF', 'Random', 'SCAN is also called the elevator algorithm.', 'Storage'],
+  ['Spooling is mainly used for:', null, 'Queuing jobs for slow devices such as printers', 'Memory allocation', 'CPU scheduling', 'Encryption', 'Jobs are buffered on disk and sent to the device one by one.', 'Storage'],
+  ['Which of these is a real-time operating system use case?', null, 'Controlling an aircraft\'s flight system', 'Writing documents', 'Browsing websites', 'Watching videos offline', 'Real-time systems must respond within strict deadlines.', 'Basics'],
+  ['The program that loads the operating system when a computer starts is the:', null, 'Bootloader', 'Linker', 'Assembler', 'Interpreter', 'Firmware hands control to the bootloader, which loads the kernel.', 'Basics'],
+];

@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 
 import ItemList, { Row } from '../components/ItemList';
 import { Empty, PageHero, Reveal, useTitle } from '../components/ui';
-import { CONTACT_EMAIL, COURSES, collectionFor, courseById, PLAY_URL, SECTIONS, TELEGRAM_URL } from '../lib/courses';
+import { CONTACT_EMAIL, COURSES, collectionFor, courseById, SECTIONS, TELEGRAM_URL } from '../lib/courses';
 import { driveDownload, drivePreview, folderEmbed } from '../lib/files';
 import { loadCollection } from '../lib/firestore';
 import { neutralLabels, unitSortKey } from '../lib/fileLabel';
@@ -15,7 +15,6 @@ import { parseName } from '../lib/subjects';
 export function Section({ section }) {
   const s = SECTIONS[section];
   useTitle(s.title);
-  usePrefetch(section);
   return (
     <>
       <PageHero eyebrow={section === 'papers' ? 'Question papers' : 'Notes'} title={s.title} sub={s.blurb} art={s.gif} />
@@ -184,24 +183,35 @@ function SearchResult({ r, i }) {
   );
 }
 
-/** Searches subject names and codes in every papers and notes collection. */
+/**
+ * Searches subject names and codes across all papers and notes, using /data/search.json
+ * (written at build time). Falls back to reading the collections only if that file is missing.
+ */
+let indexPromise = null;
+async function searchIndex() {
+  indexPromise ??= fetch('/data/search.json')
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .then(async (idx) => {
+      if (idx) return idx;
+      const rows = await Promise.all(
+        ['papers', 'notes'].flatMap((section) =>
+          COURSES.map(async (c) => groupSubjects(await loadCollection(collectionFor(section, c.id)).catch(() => [])).map((g) => ({ h: `/${section}/${c.id}/${g.slug}`, t: g.title, c: c.title, s: section, n: g.items.length, k: g.codes }))),
+        ),
+      );
+      return rows.flat();
+    });
+  return indexPromise;
+}
 export async function searchAll(query, limit = 60) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const out = [];
-  await Promise.all(
-    ['papers', 'notes'].flatMap((section) =>
-      COURSES.map(async (c) => {
-        const items = await loadCollection(collectionFor(section, c.id)).catch(() => []);
-        for (const g of groupSubjects(items)) {
-          const hay = `${g.title} ${g.codes.join(' ')}`.toLowerCase();
-          const i = hay.indexOf(q);
-          if (i < 0) continue;
-          out.push({ href: `/${section}/${c.id}/${g.slug}`, title: g.title, course: c.title, section, count: g.items.length, codes: g.codes, score: (i === 0 ? 0 : 1) + (section === 'papers' ? 0 : 0.5) });
-        }
-      }),
-    ),
-  );
+  for (const g of await searchIndex()) {
+    const i = `${g.t} ${g.k.join(' ')}`.toLowerCase().indexOf(q);
+    if (i < 0) continue;
+    out.push({ href: g.h, title: g.t, course: g.c, section: g.s, count: g.n, codes: g.k, score: (i === 0 ? 0 : 1) + (g.s === 'papers' ? 0 : 0.5) });
+  }
   return out.sort((a, b) => a.score - b.score || b.count - a.count).slice(0, limit);
 }
 
@@ -233,47 +243,6 @@ export function Labs() {
       <section className="section tight">
         <div className="wrap narrow">
           <ItemList collection="lab_manuals" noun="manuals" emptyText="Lab manuals and viva questions are being added. Have one to share? Email us and it will be added for everyone." />
-        </div>
-      </section>
-    </>
-  );
-}
-
-export function Placements() {
-  useTitle('Placements');
-  return (
-    <>
-      <PageHero eyebrow="Placements and Interviews" title="Get placement-ready" sub="Practice tests, interview questions and job updates." art="/img/interview2.png" />
-      <section className="section">
-        <div className="wrap">
-          <div className="cards three">
-            {[
-              ['🧮', 'Aptitude and reasoning', 'Short tests with instant answers and explanations, in the app.'],
-              ['💻', 'Technical MCQs', 'C, C++, Java and Python quizzes that keep your best score.'],
-              ['🎤', 'Interview questions', 'TCS, Infosys and core-subject questions that work offline in the app.'],
-            ].map(([ico, t, b], i) => (
-              <Reveal key={t} delay={i * 80}>
-                <a className="card pad" href={PLAY_URL} target="_blank" rel="noreferrer">
-                  <span className="feature-ico" aria-hidden="true">{ico}</span>
-                  <h3>{t}</h3>
-                  <p className="muted">{b}</p>
-                  <span className="card-cta">Open in the app <span aria-hidden="true">→</span></span>
-                </a>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal as="h2" className="section-title spaced">Jobs and internships</Reveal>
-          <Reveal className="telegram">
-            <span className="feature-ico" aria-hidden="true">📨</span>
-            <div>
-              <b>Get openings first on Telegram</b>
-              <p className="muted">Job and internship openings are posted on t.me/ouallinone.</p>
-            </div>
-            <a className="btn" href={TELEGRAM_URL} target="_blank" rel="noreferrer">Join</a>
-          </Reveal>
-          <div className="narrow-left">
-            <ItemList collection="jobs" noun="listings" emptyText="No listings on the website right now. The Telegram channel has the latest openings." />
-          </div>
         </div>
       </section>
     </>
@@ -502,10 +471,4 @@ export function NotFound() {
   );
 }
 
-/** Warms the session cache for the lists a visitor is likely to open next. */
-export function usePrefetch(section) {
-  useEffect(() => {
-    if (!section) return;
-    for (const c of COURSES) loadCollection(collectionFor(section, c.id)).catch(() => {});
-  }, [section]);
-}
+
