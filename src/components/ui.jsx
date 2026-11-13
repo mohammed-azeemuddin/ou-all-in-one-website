@@ -111,7 +111,7 @@ export function Header() {
               {label}
             </NavLink>
           ))}
-          <a className="btn btn-small nav-cta" href={appUrl()} target="_blank" rel="noreferrer">
+          <a className="btn btn-small nav-cta" href="/app/">
             Get the app
           </a>
         </nav>
