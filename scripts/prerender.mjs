@@ -130,7 +130,9 @@ const totalPapers = COURSES.reduce((a, c) => a + data[`papers:${c.id}`].reduce((
     .sort((a, b) => sessionSortKey(b.name) - sessionSortKey(a.name) || parseName(a.name).title.localeCompare(parseName(b.name).title))
     .slice(0, 12);
   const notes = COURSES.reduce((a, c) => a + data[`notes:${c.id}`].reduce((x, g) => x + g.items.length, 0), 0);
-  const home = JSON.stringify({ updated: today, papers: totalPapers, notes, latest });
+  // Items per course, so the Papers and Notes pages can show counts and hide courses with nothing yet.
+  const counts = Object.fromEntries(['papers', 'notes'].flatMap((section) => COURSES.map((c) => [`${section}:${c.id}`, data[`${section}:${c.id}`].reduce((x, g) => x + g.items.length, 0)])));
+  const home = JSON.stringify({ updated: today, papers: totalPapers, notes, latest, counts });
   // Search index: every subject's title, codes and link, so site search needs no Firestore reads.
   const search = JSON.stringify(['papers', 'notes'].flatMap((section) => COURSES.flatMap((c) => data[`${section}:${c.id}`].map((g) => ({ h: `/${section}/${c.id}/${g.slug}`, t: g.title, c: c.title, s: section, n: g.items.length, k: [...g.codes] })))));
   for (const dir of [join(DIST, 'data'), join('public', 'data')]) {
@@ -253,7 +255,16 @@ for (const [path, title, description, h1] of [
     const passage = q.passage ? `<p class="muted"><b>Passage (${esc(q.passage.title)}):</b> ${esc(q.passage.text)}</p>` : '';
     const code = q.code ? `<pre class="code"><code>${esc(q.code)}</code></pre>` : '';
     const opts = `<ol type="A">${q.options.map((o) => `<li>${esc(o)}</li>`).join('')}</ol>`;
-    return `<div class="q-card">${passage}<p class="q-text"><b>${n}.</b> ${esc(q.q)}</p>${code}${opts}<details><summary>Answer</summary><p><b>${'ABCD'[q.a]}. ${esc(q.options[q.a])}</b>${q.ex ? ` ${esc(q.ex)}` : ''}</p></details></div>`;
+    const lines = String(q.ex ?? '').split('\n').filter(Boolean);
+    const method = lines.find((l) => l.startsWith('How to solve:'));
+    const steps = lines.filter((l) => l.startsWith('Step:')).map((l) => `<li>${esc(l.slice(5).trim())}</li>`).join('');
+    const shortcut = lines.find((l) => l.startsWith('Shortcut:'));
+    const key = lines.find((l) => l.startsWith('Key idea:'));
+    const others = lines.filter((l) => l.startsWith('Not:')).map((l) => `<li>${esc(l.slice(4).trim())}</li>`).join('');
+    const remember = lines.find((l) => l.startsWith('Remember:'));
+    const plain = lines.filter((l) => !/^(How to solve|Key idea|Step|Not|Shortcut|Remember):/.test(l)).map((l) => `<p>${esc(l)}</p>`).join('');
+    const ex = `${method ? `<p><b>How to solve:</b> ${esc(method.slice(13).trim())}</p>` : ''}${key ? `<p><b>Key idea:</b> ${esc(key.slice(9).trim())}</p>` : ''}${steps ? `<ol>${steps}</ol>` : ''}${plain}${others ? `<p><b>Why not the others:</b></p><ul>${others}</ul>` : ''}${shortcut ? `<p><b>Shortcut:</b> ${esc(shortcut.slice(9).trim())}</p>` : ''}${remember ? `<p><b>Remember:</b> ${esc(remember.slice(9).trim())}</p>` : ''}`;
+    return `<div class="q-card">${passage}<p class="q-text"><b>${n}.</b> ${esc(q.q)}</p>${code}${opts}<details><summary>Answer</summary><p><b>${'ABCD'[q.a]}. ${esc(q.options[q.a])}</b></p>${ex}</details></div>`;
   };
   const mockList = (ms) => list(ms.map((m) => [`/placements/mock/${m.id}`, m.title, `${m.questions} questions · ${m.minutes} min`]));
   write('/placements', {
@@ -298,16 +309,82 @@ for (const [path, title, description, h1] of [
   });
   for (const c of idx.companies) {
     const rows = c.pattern.map((p) => `<tr><td>${esc(p.title)}</td><td>${p.questions}</td><td>${p.minutes} min</td></tr>`).join('');
-    const coding = c.coding.map((k) => { const p = idx.coding[k]; return `<h3>${esc(p.title)}</h3><p>${esc(p.statement)}</p><pre class="code"><code>${esc(p.sample)}</code></pre>`; }).join('');
+    const coding = list(c.coding.map((k) => idx.coding.find((p) => p.id === k)).filter(Boolean).map((p) => [`/placements/coding/${p.id}`, p.title, `${p.level} · ${p.topic}`]));
     write(`/placements/companies/${c.id}`, {
       title: `${c.name} Test Pattern, Preparation and Mock Tests | OU All In One`,
       description: `${c.full}: test pattern (${c.pattern.map((p) => p.title).join(', ')}), tips, coding practice and 3 free mock tests.`,
       h1: `${c.name} preparation`,
       intro: c.about,
       priority: 0.8,
-      body: `${c.asked ? `<p><a href="/placements/asked/${c.id}">Previously asked ${esc(c.name)} questions (${c.asked})</a></p>` : ''}<h2>Test pattern</h2><table class="pattern"><thead><tr><th>Section</th><th>Questions</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table>${c.extra ? `<p>${esc(c.extra)}</p>` : ''}<h2>Tips</h2><ul>${c.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><h2>Mock tests</h2>${mockList(c.mocks)}<h2>Coding practice</h2>${coding}`,
+      body: `${c.asked ? `<p><a href="/placements/asked/${c.id}">Previously asked ${esc(c.name)} questions (${c.asked})</a></p>` : ''}<h2>Test pattern</h2><table class="pattern"><thead><tr><th>Section</th><th>Questions</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table>${c.extra ? `<p>${esc(c.extra)}</p>` : ''}<h2>Tips</h2><ul>${c.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><h2>Mock tests</h2>${mockList(c.mocks)}<h2>Previously asked coding questions</h2>${coding}<p><a href="/placements/coding">All coding practice</a></p>`,
       jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Companies', '/placements/companies'], [c.name, `/placements/companies/${c.id}`]])],
     });
+  }
+  // Coding practice: the list and one page per problem (statement and samples, so they can be found in search).
+  const cname = (id) => idx.companies.find((x) => x.id === id)?.name ?? id;
+  const askedText = (asked) => asked.map((a) => `${cname(a.company)}${a.when ? ` (${a.when})` : ''}`).join(', ');
+  write('/placements/coding', {
+    title: 'Company Coding Questions: TCS, Infosys, Wipro, Accenture Previously Asked | OU All In One',
+    description: `${idx.coding.length} coding questions reported from TCS NQT, Infosys, Wipro, Accenture, Cognizant, Capgemini, HCLTech, Deloitte, Tech Mahindra and LTIMindtree coding rounds, with examples and hints.`,
+    h1: 'Coding practice',
+    intro: 'Coding problems candidates reported from company coding rounds (memory-based), written up with our own examples and hints. A live code editor with test cases is coming soon.',
+    priority: 0.8,
+    body: list(idx.coding.map((p) => [`/placements/coding/${p.id}`, p.title, `${p.level} · ${p.topic}${p.asked.length ? ` · ${askedText(p.asked)}` : ''}`])),
+    jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Coding practice', '/placements/coding']])],
+  });
+  for (const { id } of idx.coding) {
+    const p = P(`coding/${id}.json`);
+    const where = p.asked.length ? ` asked in ${[...new Set(p.asked.map((a) => cname(a.company)))].slice(0, 2).join(' and ')} coding round` : ' coding question';
+    write(`/placements/coding/${id}`, {
+      title: `${p.title}:${where} | OU All In One`,
+      description: `${p.statement} ${p.asked.length ? `Reported in ${askedText(p.asked)}.` : ''} Examples, constraints and a hint.`.trim(),
+      h1: p.title,
+      intro: p.statement,
+      priority: 0.6,
+      body: `${p.asked.length ? `<p>Reported in: ${esc(askedText(p.asked))} (memory-based)</p>` : ''}<h2>Input</h2><p>${esc(p.input)}</p><h2>Output</h2><p>${esc(p.output)}</p><h2>Constraints</h2><p>${esc(p.constraints)}</p>${p.samples.map((s, i) => `<h2>Example ${i + 1}</h2><pre class="code"><code>Input:\n${esc(s.in)}\n\nOutput:\n${esc(s.out)}</code></pre>`).join('')}<p><b>Hint:</b> ${esc(p.hint)}</p><p><a href="/placements/coding">All coding practice</a></p>`,
+      jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Coding practice', '/placements/coding'], [p.title, `/placements/coding/${id}`]])],
+    });
+  }
+  // Interviews: hub, one page per company experience and one per subject (answers in the HTML, plus FAQ data).
+  if (idx.interviews) {
+    write('/placements/interviews', {
+      title: 'Interview Experiences and Questions: TCS, Infosys, Wipro, Accenture | OU All In One',
+      description: `What ${idx.interviews.companies.length} companies asked freshers in recent interviews, and ${idx.interviews.subjects.reduce((a, s) => a + s.count, 0)} interview questions with answers on HR, OOP, C, C++, Java, Python, DSA, DBMS, SQL, OS, networks and Gen AI.`,
+      h1: 'Interview preparation',
+      intro: 'Company interview experiences (rounds, technical and HR questions candidates reported) and answered interview questions by subject.',
+      priority: 0.8,
+      body: `<h2>Company interview experiences</h2>${list(idx.interviews.companies.map((iv) => [`/placements/interviews/${iv.company}`, `${cname(iv.company)} interview experience`, `${iv.technical + iv.hr} reported questions`]))}<h2>Interview questions by subject</h2>${list(idx.interviews.subjects.map((s) => [`/placements/interview-questions/${s.id}`, `${s.title} interview questions`, `${s.count} questions`]))}`,
+      jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Interviews', '/placements/interviews']])],
+    });
+    for (const { company } of idx.interviews.companies) {
+      const iv = P(`interviews/company/${company}.json`);
+      const name = cname(company);
+      const qList = (items) => `<ul>${items.map((t) => `<li>${esc(t.text)}${t.code ? ` <a href="/placements/coding/${t.code}">(coding problem)</a>` : t.qid ? ` <a href="/placements/interview-questions/${t.subject}#${t.qid.split('/')[1]}">(answer)</a>` : ''}</li>`).join('')}</ul>`;
+      write(`/placements/interviews/${company}`, {
+        title: `${name} Interview Experience and Questions (Technical and HR) | OU All In One`,
+        description: `${name} interview rounds and the technical and HR questions candidates reported in recent interviews, with answers and tips. ${iv.summary}`.slice(0, 300),
+        h1: `${name} interview experience`,
+        intro: iv.summary,
+        priority: 0.8,
+        body: `<h2>Selection process</h2><ol>${iv.rounds.map((r) => `<li><b>${esc(r.title)}</b>: ${esc(r.what)}</li>`).join('')}</ol><h2>Technical questions candidates reported</h2>${qList(iv.technical)}<h2>HR and managerial questions</h2>${qList(iv.hr)}<h2>Tips</h2><ul>${iv.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><h2>Reported experiences</h2>${iv.reports.map((r) => `<h3>${esc(r.label)}</h3><p>${esc(r.text)}</p>`).join('')}<h2>Sources</h2><ul>${iv.sources.map((x) => `<li><a href="${esc(x.url)}" rel="nofollow noreferrer">${esc(x.title)}</a></li>`).join('')}</ul><p><a href="/placements/companies/${company}">${esc(name)} test pattern and mock tests</a></p>`,
+        jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Interviews', '/placements/interviews'], [name, `/placements/interviews/${company}`]])],
+      });
+    }
+    for (const { id } of idx.interviews.subjects) {
+      const sub = P(`interviews/subject/${id}.json`);
+      write(`/placements/interview-questions/${id}`, {
+        title: `${sub.title} Interview Questions and Answers for Freshers | OU All In One`,
+        description: `${sub.qs.length} ${sub.title} interview questions with short answers for placements. ${sub.blurb}`,
+        h1: `${sub.title} interview questions`,
+        intro: sub.blurb,
+        priority: 0.7,
+        body: sub.qs.map((q, i) => `<h3 id="${q.id.split('/')[1]}">${i + 1}. ${esc(q.q)}</h3><p>${esc(q.a)}</p>${q.asked.length ? `<p class="muted">Asked in: ${esc(q.asked.map(cname).join(', '))}</p>` : ''}`).join('') + `<p><a href="/placements/interviews">All interview preparation</a></p>`,
+        jsonld: [
+          crumbs([['Home', '/'], ['Placements', '/placements'], ['Interviews', '/placements/interviews'], [sub.title, `/placements/interview-questions/${id}`]]),
+          { '@type': 'FAQPage', mainEntity: sub.qs.map((q) => ({ '@type': 'Question', name: q.q, acceptedAnswer: { '@type': 'Answer', text: q.a } })) },
+        ],
+      });
+    }
   }
   for (const c of idx.companies.filter((x) => x.asked)) {
     const data = P(`t/asked/${c.id}.json`);

@@ -7,12 +7,17 @@
  *
  *   node scripts/build-placements.mjs
  */
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { APTITUDE_TOPICS } from '../content/placements/aptitude.mjs';
 import { ASKED } from '../content/placements/asked.mjs';
-import { CODING, COMPANIES } from '../content/placements/companies.mjs';
+import { COMPANIES } from '../content/placements/companies.mjs';
+import { PROBLEMS } from '../content/placements/coding.mjs';
+import { fullExplanation } from '../content/placements/explain.mjs';
+import { makeTechExplainer } from '../content/placements/tech-explain/index.mjs';
+import { INTERVIEWS } from '../content/placements/interviews.mjs';
+import { SUBJECTS } from '../content/placements/interview-subjects.mjs';
 import { hash, many, mcq, rng, shuffle, templateOf } from '../content/placements/lib.mjs';
 import { REASONING_TOPICS } from '../content/placements/reasoning.mjs';
 import { AI, DBMS, GENAI, MSOFFICE, NETSEC, pseudocode } from '../content/placements/tech-ai-misc.mjs';
@@ -27,8 +32,15 @@ const OUT = 'public/data/placements';
 rmSync(OUT, { recursive: true, force: true });
 const write = (rel, data) => {
   if (rel.startsWith('t/') && Array.isArray(data.questions)) {
+    // Drop repeats: same id, or the same question text (with its code/passage) worded with different options.
+    // A wording used 4+ times is a shared instruction ("Choose the correctly spelt word"), not a repeat, so keep those.
     const seen = new Set();
-    data.questions = data.questions.filter((q) => (seen.has(q.id) ? false : seen.add(q.id)));
+    const text = (q) => `${q.q}\u0000${q.code ?? ''}\u0000${q.passage ?? ''}`.toLowerCase().replace(/\s+/g, ' ');
+    const uses = new Map();
+    for (const q of data.questions) uses.set(text(q), (uses.get(text(q)) ?? 0) + 1);
+    const key = (q) => (uses.get(text(q)) <= 3 ? text(q) : `${text(q)}\u0000${[...q.options].map(String).sort().join('|')}`);
+    data.questions = data.questions.filter((q) => (seen.has(q.id) || seen.has(key(q)) ? false : (seen.add(q.id), seen.add(key(q)))));
+    if (typeof data.count === 'number') data.count = data.questions.length;
   }
   const f = join(OUT, rel);
   mkdirSync(join(f, '..'), { recursive: true });
@@ -36,11 +48,11 @@ const write = (rel, data) => {
 };
 
 const PRACTICE = 50; // questions per generated practice topic (every topic should have at least 50)
-const PER_TEMPLATE = 8; // most questions of one template per topic (numbers differ), so lists don't feel repetitive
+const PER_TEMPLATE = 4; // most questions of one template per topic (numbers differ), so lists don't feel repetitive
 /** n questions from a generator, using the smallest per-template cap that still reaches n. */
 const fill = (gen, n, seed, cap = PER_TEMPLATE) => {
   let best = [];
-  for (const c of [cap, 12, 16, 25, Infinity]) {
+  for (const c of [cap, 5, 6]) {
     if (c < cap) continue;
     best = many(gen, n, seed, c);
     if (best.length >= n) break;
@@ -48,7 +60,7 @@ const fill = (gen, n, seed, cap = PER_TEMPLATE) => {
   return best;
 };
 // Topics where every question needs fresh working even if the wording is alike: no template cap.
-const NO_CAP = new Set(['number-series', 'letter-series', 'clocks', 'odd-one-out', 'analogies', 'seating-arrangement', 'direction-sense']);
+const NO_CAP = new Set(['seating-arrangement', 'direction-sense']); // every question is its own puzzle; the others now have many question types
 // Stable question ids (from the content), so a student's saved progress survives rebuilds.
 const qkey = (q) => `q${hash(`${q.q}|${q.code ?? ''}|${q.options.join('|')}`).toString(36)}`;
 const tag = (q, src) => ({ ...q, id: qkey(q), src });
@@ -140,7 +152,43 @@ function writeMock(id, title, sections, used = freshUsed()) {
 }
 
 // ---------- sections ----------
-const index = { updated: new Date().toISOString().slice(0, 10), sections: [], languages: [], companies: [], coding: CODING };
+// Coding practice: the list (no statements) goes in index.json; each problem has its own file.
+// `solution` and `sources` stay out of the published data.
+const coding = PROBLEMS.map(({ id, title, topic, level, asked }) => ({ id, title, topic, level, asked: asked.map(({ company, when }) => (when ? { company, when } : { company })) }));
+const index = { updated: new Date().toISOString().slice(0, 10), sections: [], languages: [], companies: [], coding };
+const CODING_FOR = { infytq: 'infosys' }; // InfyTQ is Infosys's certification: show Infosys's coding questions
+const codingFor = (cid) => coding
+  .filter((p) => p.asked.some((a) => a.company === (CODING_FOR[cid] ?? cid)))
+  .sort((a, b) => {
+    const when = (p) => (p.asked.find((x) => x.company === (CODING_FOR[cid] ?? cid))?.when ? 1 : 0);
+    return when(b) - when(a) || b.asked.length - a.asked.length || ['Easy', 'Medium', 'Hard'].indexOf(a.level) - ['Easy', 'Medium', 'Hard'].indexOf(b.level);
+  })
+  .map((p) => p.id);
+// Interviews: company experiences link each reported question to a subject answer or a coding problem.
+// Links are checked here, and the "asked in" tags on subject answers are derived from them.
+const SUBJECT_Q = new Map(SUBJECTS.flatMap((s) => s.qs.map((q) => [q.id, { ...q, subject: s.id }])));
+const askedBy = new Map();
+const resolve = (company, [text, link]) => {
+  if (!link) return { text };
+  if (link.startsWith('code:')) {
+    const prob = PROBLEMS.find((p) => p.id === link.slice(5));
+    if (!prob) throw new Error(`interviews: ${company} links to missing coding problem ${link}`);
+    return { text, code: prob.id, title: prob.title };
+  }
+  const q = SUBJECT_Q.get(link);
+  if (!q) throw new Error(`interviews: ${company} links to missing answer ${link}`);
+  if (!askedBy.has(link)) askedBy.set(link, new Set());
+  askedBy.get(link).add(company);
+  return { text, subject: q.subject, qid: q.id, title: q.q };
+};
+const interviewCompanies = INTERVIEWS.map((iv) => ({ ...iv, technical: iv.technical.map((t) => resolve(iv.company, t)), hr: iv.hr.map((t) => resolve(iv.company, t)) }));
+for (const iv of interviewCompanies) write(`interviews/company/${iv.company}.json`, { ...iv, rounds: iv.rounds.map(([title, what]) => ({ title, what })), reports: iv.reports.map(([label, text]) => ({ label, text })), sources: iv.sources.map(([title, url]) => ({ title, url })) });
+for (const s of SUBJECTS) write(`interviews/subject/${s.id}.json`, { id: s.id, title: s.title, blurb: s.blurb, qs: s.qs.map((q) => ({ ...q, asked: [...(askedBy.get(q.id) ?? [])] })) });
+index.interviews = {
+  companies: interviewCompanies.map((iv) => ({ company: iv.company, technical: iv.technical.length, hr: iv.hr.length })),
+  subjects: SUBJECTS.map((s) => ({ id: s.id, title: s.title, blurb: s.blurb, count: s.qs.length, asked: s.qs.filter((q) => askedBy.has(q.id)).length })),
+};
+for (const { solution, asked, ...p } of PROBLEMS) write(`coding/${p.id}.json`, { ...p, asked: asked.map(({ company, when }) => (when ? { company, when } : { company })) });
 const V2 = []; // filled below if the owner's v2 bank is switched on
 
 function topicSection(id, title, blurb, topics, makeQs, mockSpec) {
@@ -200,11 +248,89 @@ index.sections.push(topicSection('reasoning', 'Logical Reasoning', 'Series, codi
   index.sections.push(sec);
 }
 
+// Full working for the imported (v2) question patterns, computed from the numbers in the question.
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function v2Working(q) {
+  const t = q.q;
+  const n = (x) => Number(String(x).replace(/,/g, ''));
+  let m;
+  if ((m = t.match(/is (\d+) years old\. Her brother is (\d+) years younger\. What will her brother.s age be after (\d+) years/))) {
+    const [a, d, y] = m.slice(1).map(n);
+    return `Brother's age now = ${a} − ${d} = ${a - d}. After ${y} years: ${a - d} + ${y} = ${a - d + y}.`;
+  }
+  if ((m = t.match(/average of (\d+) numbers is (\d+)\. If a new number (\d+) is included/))) {
+    const [c, avg, x] = m.slice(1).map(n);
+    return `Old total = ${c} × ${avg} = ${c * avg}. New total = ${c * avg} + ${x} = ${c * avg + x}. New count = ${c} + 1 = ${c + 1}. New average = ${c * avg + x} ÷ ${c + 1} = ${(c * avg + x) / (c + 1)}.`;
+  }
+  if ((m = t.match(/remainder when (\d+) is divided by (\d+)/))) {
+    const [x, d] = m.slice(1).map(n);
+    return `${x} ÷ ${d}: ${d} × ${Math.floor(x / d)} = ${d * Math.floor(x / d)}, which is the largest multiple of ${d} not above ${x}. Remainder = ${x} − ${d * Math.floor(x / d)} = ${x % d}.`;
+  }
+  if ((m = t.match(/buys an item for ₹(\d+) and sells it for ₹(\d+)\. What is the profit/))) {
+    const [c, sp] = m.slice(1).map(n);
+    return `Profit = selling price − cost price = ${sp} − ${c} = ₹${sp - c}.`;
+  }
+  if ((m = t.match(/sum of ₹(\d+) is divided in the ratio (\d+):(\d+)\. What is the (first|second) share/))) {
+    const [T, a, b] = m.slice(1, 4).map(n);
+    const part = T / (a + b);
+    const mine = m[4] === 'first' ? a : b;
+    return `Total ratio parts = ${a} + ${b} = ${a + b}. One part = ${T} ÷ ${a + b} = ${part}. The ${m[4]} share has ${mine} parts: ${mine} × ${part} = ${mine * part}.`;
+  }
+  if ((m = t.match(/sum of the positions of ([A-Z]) and ([A-Z])/))) {
+    const [x, y] = [ALPHA.indexOf(m[1]) + 1, ALPHA.indexOf(m[2]) + 1];
+    return `${m[1]} is letter number ${x} and ${m[2]} is letter number ${y}. Sum = ${x} + ${y} = ${x + y}.`;
+  }
+  if ((m = t.match(/If today is (\w+), which weekday is (\d+) days later/))) {
+    const d = WEEK.indexOf(m[1]);
+    const k = n(m[2]);
+    const seq = Array.from({ length: k % 7 }, (_, i) => WEEK[(d + i + 1) % 7]);
+    return `Weekdays repeat every 7 days, so only the remainder matters: ${k} ÷ 7 leaves ${k % 7}. Count ${k % 7} day${k % 7 === 1 ? '' : 's'} on from ${m[1]}: ${seq.join(', ') || m[1]}. So it is ${WEEK[(d + k) % 7]}.`;
+  }
+  if ((m = t.match(/clock shows (\d+):00\. What will it show (\d+) hours later/))) {
+    const [h, k] = m.slice(1).map(n);
+    const r = ((h + k - 1) % 12) + 1;
+    return `${h} + ${k} = ${h + k}.${h + k > 12 ? ` A 12-hour clock starts again after 12, so ${h + k} − 12 = ${r}.` : ''} It shows ${r}:00.`;
+  }
+  if ((m = t.match(/shifted forward by (\d+) places with wraparound\. What does ([A-Z]) become/))) {
+    const k = n(m[1]);
+    const p = ALPHA.indexOf(m[2]);
+    return `Number the letters A = 0 … Z = 25: ${m[2]} = ${p}. Add the shift: ${p} + ${k} = ${p + k}.${p + k > 25 ? ` Past Z, so wrap around: ${p + k} − 26 = ${(p + k) % 26}.` : ''} Letter number ${(p + k) % 26} is ${ALPHA[(p + k) % 26]}.`;
+  }
+  if ((m = t.match(/arithmetic series: ([\d, ]+), \?/))) {
+    const v = m[1].split(',').map(n);
+    const d = v[1] - v[0];
+    return `Differences between neighbouring terms: ${v.slice(1).map((x, i) => `${x} − ${v[i]} = ${x - v[i]}`).join(', ')}. The difference is always ${d}, so the next term is ${v[v.length - 1]} + ${d} = ${v[v.length - 1] + d}.`;
+  }
+  if ((m = t.match(/missing number: ([\d, ?]+)\./)) && /doubles/.test(q.ex)) {
+    const v = m[1].split(',').map((x) => x.trim());
+    const i = v.indexOf('?');
+    const prev = n(v[i - 1]);
+    return `Each term is twice the one before: ${v.slice(0, i).map(n).slice(1).map((x, j) => `${n(v[j])} × 2 = ${x}`).join(', ')}. So ? = ${prev} × 2 = ${prev * 2} (check: ${prev * 2} × 2 = ${prev * 4}).`;
+  }
+  if ((m = t.match(/If ([A-Z]+) = (\d+) \(adding letter positions[^)]*\), what is ([A-Z]+)/))) {
+    const w = m[3].split('');
+    const vals = w.map((c) => ALPHA.indexOf(c) + 1);
+    return `The code is the sum of letter positions (check: ${m[1]} = ${m[1].split('').map((c) => ALPHA.indexOf(c) + 1).join(' + ')} = ${m[2]}). For ${m[3]}: ${w.map((c, i) => `${c} = ${vals[i]}`).join(', ')}; ${vals.join(' + ')} = ${vals.reduce((a, b) => a + b, 0)}.`;
+  }
+  if ((m = t.match(/square-number pattern: ([\d, ]+), \?/))) {
+    const v = m[1].split(',').map(n);
+    const roots = v.map((x) => Math.round(Math.sqrt(x)));
+    const nx = roots[roots.length - 1] + 1;
+    return `Each term is a perfect square: ${v.map((x, i) => `${x} = ${roots[i]}²`).join(', ')}. The next square is ${nx}² = ${nx * nx}.`;
+  }
+  if ((m = t.match(/Find the next number: ([\d, ]+), \?/)) && /increases by/.test(q.ex)) {
+    const v = m[1].split(',').map(n);
+    return `Differences: ${v.slice(1).map((x, i) => `${x} − ${v[i]} = ${x - v[i]}`).join(', ')}. Each term increases by ${v[1] - v[0]}, so the next is ${v[v.length - 1]} + ${v[1] - v[0]} = ${v[v.length - 1] + v[1] - v[0]}.`;
+  }
+  return null;
+}
+
 // ---------- owner's v2 bank (5000 rows; ~1,165 left after removing copies) ----------
 // Quant/reasoning are one-step patterns with different numbers: at most V2_PER_TEMPLATE of each per
 // topic, interleaved and added after our own questions. Set INCLUDE_V2 to false to remove it all.
 const INCLUDE_V2 = true;
-const V2_PER_TEMPLATE = 12;
+const V2_PER_TEMPLATE = 3;
 const V2_FILE = 'content/placements/imported/v2.json';
 const V2_NEW_TOPICS = {
   'reasoning/alphabet-positions': ['Alphabet Positions', 'Letter positions (A=1 … Z=26) used in coding and series questions.'],
@@ -234,7 +360,7 @@ if (INCLUDE_V2 && existsSync(V2_FILE)) {
     const existing = JSON.parse(readFileSync(file, 'utf8')).questions.length;
     const one = gid === 'technical' || gid === 'verbal';
     let dealt = [];
-    for (const cap of one ? [1] : [V2_PER_TEMPLATE, 20, 30, 50]) {
+    for (const cap of one ? [1] : [V2_PER_TEMPLATE]) {
       const groups = new Map();
       for (const q of list) {
         const tk = one ? q.q : templateOf({ q: q.q.replace(/\b[A-Z]\b/g, 'L') });
@@ -248,7 +374,14 @@ if (INCLUDE_V2 && existsSync(V2_FILE)) {
     }
     const data = JSON.parse(readFileSync(file, 'utf8'));
     const have = new Set(data.questions.map((q) => q.id));
-    const add = dealt.map((q) => ({ ...tag({ q: q.q, options: q.options, a: q.a, ex: q.ex }, 'v2'), v2: true })).filter((q) => (have.has(q.id) ? false : have.add(q.id)));
+    // Some imported explanations stop one step short ("…divide by 18."); finish them with the answer.
+    const finish = (q) => {
+      const ans = String(q.options[q.a]);
+      const n = ans.replace(/,/g, '').match(/\d+(\.\d+)?/g);
+      const inEx = (q.ex.replace(/,/g, '').match(/\d+(\.\d+)?/g) ?? []);
+      return n && n.length === 1 && !inEx.includes(n[0]) ? `${q.ex.trim().replace(/[.;]$/, '')}, which gives ${ans}.` : q.ex;
+    };
+    const add = dealt.map((q) => ({ ...tag({ q: q.q, options: q.options, a: q.a, ex: v2Working(q) ?? finish(q) }, 'v2'), v2: true })).filter((q) => (have.has(q.id) ? false : have.add(q.id)));
     data.questions.push(...add);
     V2.push(...add);
     writeFileSync(file, JSON.stringify(data));
@@ -270,7 +403,7 @@ for (const c of COMPANIES) {
     asked: asked.length,
     id: c.id, name: c.name, full: c.full, about: c.about, careers: c.careers, extra: c.extra ?? null, tips: c.tips, essay: c.essay ?? null,
     pattern: c.sections.map(([title, , questions, minutes]) => ({ title, questions, minutes })),
-    coding: c.coding,
+    coding: codingFor(c.id),
     mocks,
   });
 }
@@ -338,6 +471,35 @@ if (INCLUDE_IMPORTED && existsSync(IMPORTED_FILE)) {
       write(`m/${id}.json`, { id, title, minutes: cfg.minutes, sections });
       owner.mocks.push({ id, title, questions: total, minutes: cfg.minutes, sections: sections.map((s) => ({ title: s.title, questions: s.questions.length, minutes: s.minutes })) });
     };
+    // Company Mock Test 4 follows that company's own sections, counts and timings (same as mocks 1–3).
+    // The bank's questions for the company fill matching sections first; our pools top up the rest.
+    // Sections such as pseudocode, Python or MS Office only take questions from their own pool.
+    const IMPORT_FOR = { quant: 'aptitude', reasoning: 'reasoning', verbal: 'verbal', cs: 'technical' };
+    const addCompanyMock = (c, cfg) => {
+      const def = COMPANIES.find((x) => x.id === c.id);
+      const id = `${c.id}-mock-4`;
+      const title = `${c.name} Mock Test 4`;
+      const seenPat = new Set();
+      const imported = cfg.ids.map((x) => byId.get(x)).filter((q) => q && !seenPat.has(pattern(q)) && seenPat.add(pattern(q)));
+      const taken = new Set();
+      const used = freshUsed();
+      const sections = def.sections.map(([stitle, poolName, n, minutes], i) => {
+        const grp = IMPORT_FOR[poolName];
+        const mine = [];
+        if (grp) for (const q of imported) {
+          if (mine.length >= n) break;
+          if (q.group === grp && !taken.has(q)) { taken.add(q); mine.push(tag(clean(q), 'imported')); }
+        }
+        const extra = mine.length < n ? pool(poolName, n - mine.length, `${id}-${i}`, used).map((q) => tag(q, poolName)) : [];
+        return { title: stitle, minutes, questions: [...mine, ...extra] };
+      });
+      const seenId = new Set();
+      for (const sec of sections) for (const q of sec.questions) { while (seenId.has(q.id)) q.id += 'x'; seenId.add(q.id); }
+      const total = sections.reduce((a, s) => a + s.questions.length, 0);
+      const minutes = sections.reduce((a, s) => a + s.minutes, 0);
+      write(`m/${id}.json`, { id, title, minutes, sections });
+      c.mocks.push({ id, title, questions: total, minutes, sections: sections.map((s) => ({ title: s.title, questions: s.questions.length, minutes: s.minutes })) });
+    };
     for (const cfg of JSON.parse(readFileSync(MOCKS_FILE, 'utf8'))) {
       if (SUBJECT[cfg.id]) {
         const g = index.sections.find((x) => x.id === SUBJECT[cfg.id]);
@@ -347,7 +509,7 @@ if (INCLUDE_IMPORTED && existsSync(IMPORTED_FILE)) {
         }
         continue;
       }
-      for (const c of index.companies.filter((x) => NAME[x.id] === cfg.company)) if (cfg.ids.length) addMock(c, `${c.id}-mock-4`, `${c.name} Mock Test 4`, cfg);
+      for (const c of index.companies.filter((x) => NAME[x.id] === cfg.company)) if (cfg.ids.length) addCompanyMock(c, cfg);
     }
   }
 }
@@ -376,6 +538,103 @@ for (const g of index.sections) {
   }
 }
 
+// Previously asked questions (memory-based, content/placements/asked.mjs) also go at the top of the
+// matching practice topic, tagged with the company, so students meet them while practising.
+{
+  const RULES = [
+    ['technical', 'pseudocode', /Integer |print|Function |printf|while \(|for \(/],
+    ['reasoning', 'seating-arrangement', /teach|sit |seated|classes between/i],
+    ['reasoning', 'ranking-order', /tallest|shortest|bought more|ranks?\b/i],
+    ['reasoning', 'letter-series', /does not fit the series/i],
+    ['aptitude', 'time-and-work', /workers|finish(es)? a job|job alone/i],
+    ['aptitude', 'mixtures-alligation', /mixed with|mixture|litres of oil/i],
+    ['aptitude', 'pipes-and-cisterns', /tap|cistern|pipe/i],
+    ['aptitude', 'compound-interest', /compound/i],
+    ['aptitude', 'simple-interest', /simple interest/i],
+    ['aptitude', 'speed-distance', /km\b|km\/h|speed/i],
+    ['aptitude', 'averages', /average/i],
+    ['aptitude', 'profit-loss', /profit|loss|marked|discount|sells?\b|seller/i],
+    ['aptitude', 'ratio-proportion', /ratio|proportional/i],
+    ['aptitude', 'mensuration', /circle|square|area|volume/i],
+    ['aptitude', 'number-system', /divisible|digit|remainder|HCF|LCM/i],
+    ['aptitude', 'percentages', /%|percent/i],
+  ];
+  const byTopic = new Map();
+  const askedTopic = new Map();
+  for (const [company, rows] of Object.entries(ASKED)) {
+    const qs = fromRows(rows, null, `asked-topic-${company}`);
+    rows.forEach((row, i) => {
+      const hit = RULES.find(([, , re]) => re.test(`${row[0]} ${row[1] ?? ''}`));
+      if (!hit) return;
+      const k = `${hit[0]}/${hit[1]}`;
+      if (!byTopic.has(k)) byTopic.set(k, []);
+      byTopic.get(k).push({ ...tag(qs[i], 'asked'), asked: [company] });
+      askedTopic.set(`${company}|${qs[i].q}`, hit[1]);
+    });
+  }
+  // The company's own "previously asked" page gets the same full explanations.
+  for (const company of Object.keys(ASKED)) {
+    const file = join(OUT, 't', 'asked', `${company}.json`);
+    if (!existsSync(file)) continue;
+    const data = JSON.parse(readFileSync(file, 'utf8'));
+    data.questions = data.questions.map((q) => {
+      const t = askedTopic.get(`${company}|${q.q}`);
+      return t && !q.ex.startsWith('How to solve:') ? { ...q, ex: fullExplanation(t, q) } : q;
+    });
+    writeFileSync(file, JSON.stringify(data));
+  }
+  for (const [k, list] of byTopic) {
+    const [gid, tid] = k.split('/');
+    const file = join(OUT, 't', gid, `${tid}.json`);
+    if (!existsSync(file)) continue;
+    const data = JSON.parse(readFileSync(file, 'utf8'));
+    const ids = new Set(list.map((q) => q.id));
+    data.questions = [...list, ...data.questions.filter((q) => !ids.has(q.id))];
+    writeFileSync(file, JSON.stringify(data));
+  }
+  console.log(`previously asked placed in topics: ${[...byTopic].map(([k, v]) => `${k} ${v.length}`).join(', ')}`);
+}
+
+// Full explanations (how to solve, numbered steps, shortcut) for every aptitude and reasoning question,
+// in practice topics and inside mock tests. Done last so imported and previously asked questions get it too.
+{
+  // Technical theory questions get hand-written Key idea / Why not the others / Remember explanations.
+  const practice = [];
+  for (const f of readdirSync(join(OUT, 't', 'technical'))) practice.push(...JSON.parse(readFileSync(join(OUT, 't', 'technical', f), 'utf8')).questions);
+  const techExplain = makeTechExplainer(practice);
+  let techDone = 0;
+  const upgrade = (topic, q) => {
+    const tex = !q.code && q.options ? techExplain(q) : null;
+    if (tex) { techDone++; return { ...q, ex: tex }; }
+    return q.ex?.startsWith('How to solve:') || q.ex?.startsWith('Key idea:') ? q : { ...q, ex: fullExplanation(topic, q) };
+  };
+  for (const gid of ['aptitude', 'reasoning', 'technical', 'verbal', 'c', 'cpp', 'java', 'python']) {
+    const dir = join(OUT, 't', gid);
+    if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir)) {
+      const tid = f.replace(/\.json$/, '');
+      const file = join(dir, f);
+      const data = JSON.parse(readFileSync(file, 'utf8'));
+      data.questions = data.questions.map((q) => upgrade(tid, q));
+      writeFileSync(file, JSON.stringify(data));
+    }
+  }
+  for (const f of readdirSync(join(OUT, 'm'))) {
+    const file = join(OUT, 'm', f);
+    const data = JSON.parse(readFileSync(file, 'utf8'));
+    for (const sec of data.sections) sec.questions = sec.questions.map((q) => upgrade(q.topic, q));
+    writeFileSync(file, JSON.stringify(data));
+  }
+  console.log(`technical theory explanations applied: ${techDone}`);
+}
+
+// Topic counts must match the files after write() removed repeated questions.
+for (const g of [...index.sections, ...(index.languages ?? [])]) {
+  for (const t of g.topics) {
+    const f = join(OUT, 't', g.id, `${t.id}.json`);
+    if (existsSync(f)) t.count = JSON.parse(readFileSync(f, 'utf8')).questions.length;
+  }
+}
 write('index.json', index);
 const count = (x) => x.reduce((s, t) => s + t.count, 0);
 console.log(`placements: ${index.sections.map((s) => `${s.id} ${count(s.topics)}`).join(', ')}; v2 added ${V2.length}; ${index.companies.length} companies; ${[...index.sections, ...index.languages, ...index.companies].reduce((s, x) => s + x.mocks.length, 0)} mock tests`);

@@ -174,6 +174,24 @@ export function PrepHub() {
                   </Link>
                 ))}
               </div>
+              <Reveal as="h2" className="section-title spaced">Coding practice</Reveal>
+              <Link to="/placements/coding" className="mock-card coding-hub">
+                <span className="mock-num" aria-hidden="true">{'</>'}</span>
+                <div>
+                  <b>Previously asked coding questions</b>
+                  <small className="muted">{data.coding.length} coding questions reported from TCS, Infosys, Wipro, Accenture and more, with the companies that asked them</small>
+                </div>
+                <span className="row-go" aria-hidden="true">→</span>
+              </Link>
+              <Reveal as="h2" className="section-title spaced">Interview preparation</Reveal>
+              <Link to="/placements/interviews" className="mock-card coding-hub">
+                <span className="mock-num" aria-hidden="true">?</span>
+                <div>
+                  <b>Interview experiences and questions</b>
+                  <small className="muted">What {data.interviews.companies.length} companies asked in recent interviews, and {data.interviews.subjects.reduce((a, s) => a + s.count, 0)} answered questions on HR, OOP, Java, Python, DBMS, SQL, OS, networks and Gen AI</small>
+                </div>
+                <span className="row-go" aria-hidden="true">→</span>
+              </Link>
               <Reveal as="h2" className="section-title spaced">Practise by section</Reveal>
               <div className="prep-grid">
                 {data.sections.map((s, i) => (
@@ -286,6 +304,35 @@ export function PrepGroup() {
   );
 }
 
+/**
+ * Explanation in three parts when the text has them ("How to solve:", "Step:" lines, "Shortcut:"),
+ * otherwise the plain text. The correct answer is always stated first.
+ */
+function Explanation({ ex, lead, answer }) {
+  const lines = String(ex).split('\n').filter(Boolean);
+  const method = lines.find((l) => l.startsWith('How to solve:'))?.slice(13).trim();
+  const key = lines.find((l) => l.startsWith('Key idea:'))?.slice(9).trim();
+  const steps = lines.filter((l) => l.startsWith('Step:')).map((l) => l.slice(5).trim());
+  const others = lines.filter((l) => l.startsWith('Not:')).map((l) => l.slice(4).trim());
+  const shortcut = lines.find((l) => l.startsWith('Shortcut:'))?.slice(9).trim();
+  const remember = lines.find((l) => l.startsWith('Remember:'))?.slice(9).trim();
+  const plain = lines.filter((l) => !/^(How to solve|Key idea|Step|Not|Shortcut|Remember):/.test(l));
+  return (
+    <div className="explain">
+      <p className="explain-head">{lead && lead !== 'Answer' ? <b>{lead} </b> : null}<span>Answer: <b>{answer}</b></span></p>
+      {method ? <p className="explain-method"><b>How to solve:</b> {method}</p> : null}
+      {key ? <p className="explain-method"><b>Key idea:</b> {key}</p> : null}
+      {steps.length ? <ol className="explain-steps">{steps.map((st, i) => <li key={i}>{st}</li>)}</ol> : null}
+      {plain.length ? plain.map((l, i) => <p key={i}>{l}</p>) : null}
+      {others.length ? (
+        <div className="explain-others"><b>Why not the others:</b><ul>{others.map((o, i) => <li key={i}>{o}</li>)}</ul></div>
+      ) : null}
+      {shortcut ? <p className="explain-shortcut"><b>⚡ Shortcut:</b> {shortcut}</p> : null}
+      {remember ? <p className="explain-shortcut"><b>💡 Remember:</b> {remember}</p> : null}
+    </div>
+  );
+}
+
 function CodeBlock({ code, lang }) {
   return (
     <pre className="code" data-lang={lang === 'pseudo' ? 'Pseudocode' : lang?.toUpperCase()}>
@@ -294,9 +341,14 @@ function CodeBlock({ code, lang }) {
   );
 }
 
+const COMPANY_NAME = { 'tcs-nqt': 'TCS NQT', infosys: 'Infosys', infytq: 'InfyTQ', 'wipro-elite-nth': 'Wipro', 'cognizant-genc': 'Cognizant', accenture: 'Accenture', capgemini: 'Capgemini', hcltech: 'HCLTech', deloitte: 'Deloitte', 'tech-mahindra': 'Tech Mahindra', ltimindtree: 'LTIMindtree' };
+
 function QuestionBody({ q, n }) {
   return (
     <>
+      {q.asked?.length ? (
+        <span className="asked-flag" title="Reported by candidates from recent tests (memory-based), rewritten with our own worked solution">★ Asked in {q.asked.map((c) => COMPANY_NAME[c] ?? c).join(', ')} · memory-based</span>
+      ) : null}
       {q.passage ? (
         <details className="passage">
           <summary>Passage: {q.passage.title}</summary>
@@ -330,7 +382,7 @@ function PracticeQuestion({ q, n, saved, onPick, reveal }) {
           );
         })}
       </div>
-      {show && q.ex ? <p className="explain"><b>{picked === null ? 'Answer' : picked === q.a ? 'Correct.' : 'Not quite.'}</b> {q.ex}</p> : null}
+      {show && q.ex ? <Explanation ex={q.ex} lead={picked === null ? 'Answer' : picked === q.a ? 'Correct.' : 'Not quite.'} answer={q.options[q.a]} /> : null}
     </div>
   );
 }
@@ -440,6 +492,358 @@ export function PrepCompanies() {
   );
 }
 
+// ---------- coding practice ----------
+const LEVELS = ['Easy', 'Medium', 'Hard'];
+const LEVEL_PILL = { Easy: 'pill pill-accent', Medium: 'pill pill-warn', Hard: 'pill pill-hard' };
+const companyName = (companies, id) => companies.find((x) => x.id === id)?.name ?? id;
+
+/** Shown wherever coding problems are listed, until the in-browser editor and judge are built. */
+function CodingSoon() {
+  return (
+    <p className="soon-note">
+      <b>Live code editor with test cases: coming soon.</b> Until then, solve it in your own editor (or on paper) and check your answer against the sample.
+    </p>
+  );
+}
+
+/** "TCS NQT · Sep 2023" style badges for the companies that reportedly asked a problem. */
+function AskedBadges({ asked, companies, only, link }) {
+  const list = only ? asked.filter((a) => a.company === only) : asked;
+  if (!list.length) return <span className="pill">Practice</span>;
+  return (
+    <span className="asked-badges">
+      {list.map((a) => {
+        const label = `${companyName(companies, a.company)}${a.when ? ` · ${a.when}` : ''}`;
+        return link ? (
+          <Link key={a.company} to={`/placements/companies/${a.company}`} className="asked-badge">{label}</Link>
+        ) : (
+          <span key={a.company} className="asked-badge">{label}</span>
+        );
+      })}
+    </span>
+  );
+}
+
+function CodingRow({ prob, companies, only }) {
+  return (
+    <Link to={`/placements/coding/${prob.id}`} className="mock-card coding-row">
+      <div>
+        <b>{prob.title}</b>
+        <span className="coding-meta">
+          <span className={LEVEL_PILL[prob.level]}>{prob.level}</span>
+          <span className="muted small">{prob.topic}</span>
+        </span>
+        <AskedBadges asked={prob.asked} companies={companies} only={only} />
+      </div>
+      <span className="row-go" aria-hidden="true">→</span>
+    </Link>
+  );
+}
+
+/** /placements/coding  (all problems, filter by company, topic and difficulty) */
+export function PrepCoding() {
+  useTitle('Coding practice: previously asked company coding questions');
+  const { data, error } = useJson('index.json');
+  const start = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('company') : null;
+  const [company, setCompany] = useState(start || 'all');
+  const [topic, setTopic] = useState('all');
+  const [level, setLevel] = useState('all');
+  const list = useMemo(() => {
+    if (!data) return [];
+    return data.coding.filter(
+      (p) => (company === 'all' || p.asked.some((a) => a.company === company)) && (topic === 'all' || p.topic === topic) && (level === 'all' || p.level === level),
+    );
+  }, [data, company, topic, level]);
+  const companies = data ? data.companies.filter((c) => data.coding.some((p) => p.asked.some((a) => a.company === c.id))) : [];
+  const topics = data ? [...new Set(data.coding.map((p) => p.topic))] : [];
+  const chips = (value, set, items) => (
+    <div className="chips">
+      {[['all', 'All'], ...items].map(([v, label]) => (
+        <button key={v} type="button" className={`chip ${value === v ? 'on' : ''}`} aria-pressed={value === v} onClick={() => set(v)}>{label}</button>
+      ))}
+    </div>
+  );
+  return (
+    <>
+      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Coding practice" sub="Coding problems candidates reported from TCS, Infosys, Wipro, Accenture, Cognizant and more, written up with our own examples and hints. Free." />
+      <section className="section tight">
+        <div className="wrap">
+          {error ? <Failed /> : !data ? <Loading /> : (
+            <>
+              <CodingSoon />
+              <div className="coding-filters">
+                <span className="muted small">Company</span>
+                {chips(company, setCompany, companies.map((c) => [c.id, c.name]))}
+                <span className="muted small">Topic</span>
+                {chips(topic, setTopic, topics.map((t) => [t, t]))}
+                <span className="muted small">Difficulty</span>
+                {chips(level, setLevel, LEVELS.map((l) => [l, l]))}
+              </div>
+              <p className="muted small" aria-live="polite">{list.length} of {data.coding.length} problems</p>
+              <div className="rows coding-list">
+                {list.map((p) => <CodingRow key={p.id} prob={p} companies={data.companies} />)}
+              </div>
+              {!list.length ? <p className="muted">No problems match these filters.</p> : null}
+              <p className="muted small spaced-top">Company tags are memory-based reports from candidates and public prep sites; companies do not publish their questions, and the exact problems change between drives.</p>
+            </>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+/** /placements/coding/:id */
+export function PrepCodingProblem() {
+  const { id } = useParams();
+  const idx = useJson('index.json');
+  const { data, error } = useJson(`coding/${id}.json`);
+  const [hint, setHint] = useState(false);
+  useTitle(data ? `${data.title}: coding question` : 'Coding question');
+  if (error) return <Empty title="Problem not found" action={<Link className="btn btn-small" to="/placements/coding">All coding practice</Link>} />;
+  if (!data || !idx.data) return <Loading />;
+  const companies = idx.data.companies;
+  return (
+    <>
+      <PageHero eyebrow={<Link to="/placements/coding">← Coding practice</Link>} title={data.title}>
+        <span className="coding-meta hero-meta">
+          <span className={LEVEL_PILL[data.level]}>{data.level}</span>
+          <span>{data.topic}</span>
+        </span>
+      </PageHero>
+      <section className="section tight">
+        <div className="wrap coding-page">
+          <div className="coding-asked">
+            <span className="muted small">{data.asked.length ? 'Reported in' : 'Practice problem'}</span>
+            {data.asked.length ? <AskedBadges asked={data.asked} companies={companies} link /> : null}
+          </div>
+          <p className="coding-statement">{data.statement}</p>
+          <h3>Input</h3>
+          <p>{data.input}</p>
+          <h3>Output</h3>
+          <p>{data.output}</p>
+          <h3>Constraints</h3>
+          <p className="muted">{data.constraints}</p>
+          {data.samples.map((s, i) => (
+            <div key={i} className="sample">
+              <h3>Example {i + 1}</h3>
+              <div className="sample-io">
+                <div><span className="muted small">Input</span><pre className="code"><code>{s.in}</code></pre></div>
+                <div><span className="muted small">Output</span><pre className="code"><code>{s.out}</code></pre></div>
+              </div>
+            </div>
+          ))}
+          <CodingSoon />
+          {hint ? <p className="note"><b>Hint:</b> {data.hint}</p> : <button type="button" className="btn btn-ghost btn-small" onClick={() => setHint(true)}>Show hint</button>}
+          <p className="muted small spaced-top">Written for OU All In One. Company tags are memory-based candidate reports, not official questions.</p>
+        </div>
+      </section>
+    </>
+  );
+}
+
+// ---------- interviews ----------
+const SUBJECT_ICON = { hr: '🤝', oop: '🧱', c: '🅲', cpp: '➕', java: '☕', python: '🐍', dsa: '🌳', dbms: '🗄️', sql: '🔎', os: '⚙️', cn: '🌐', se: '🔁', ai: '✨' };
+const qSlug = (qid) => qid.split('/')[1];
+const interviewFor = (cid) => (cid === 'infytq' ? 'infosys' : cid);
+
+/** A reported question with a link to our answer (or coding problem) when we have one. */
+function ReportedQ({ item }) {
+  const to = item.code ? `/placements/coding/${item.code}` : item.qid ? `/placements/interview-questions/${item.subject}#${qSlug(item.qid)}` : null;
+  return (
+    <li className="reported-q">
+      <span>{item.text}</span>
+      {to ? <Link to={to} className="answer-link">{item.code ? 'Coding problem' : 'Answer'} →</Link> : null}
+    </li>
+  );
+}
+
+/** /placements/interviews */
+export function PrepInterviews() {
+  useTitle('Interview experiences and interview questions');
+  const { data, error } = useJson('index.json');
+  return (
+    <>
+      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Interview preparation" sub="What TCS, Infosys, Wipro, Accenture and others asked candidates in recent interviews, and answers to the questions they ask most, by subject. Free." />
+      <section className="section tight">
+        <div className="wrap">
+          {error ? <Failed /> : !data ? <Loading /> : (
+            <>
+              <Reveal as="h2" className="section-title">Company interview experiences</Reveal>
+              <p className="muted narrow-left">Rounds, the technical and HR questions candidates reported, and tips, summarised from recent interview write-ups.</p>
+              <div className="course-grid company-grid">
+                {data.interviews.companies.map((iv) => {
+                  const c = data.companies.find((x) => x.id === iv.company);
+                  return (
+                    <Link key={iv.company} to={`/placements/interviews/${iv.company}`} className="course-tile">
+                      <CompanyLogo c={c} />
+                      <span className="grow">
+                        <b>{c.name}</b>
+                        <small className="muted">{iv.technical + iv.hr} reported questions</small>
+                      </span>
+                      <span className="row-go" aria-hidden="true">→</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              <Reveal as="h2" className="section-title spaced">Interview questions by subject</Reveal>
+              <p className="muted narrow-left">Short, clear answers to the questions interviewers ask most. Questions companies reportedly asked are tagged with those companies.</p>
+              <div className="prep-grid">
+                {data.interviews.subjects.map((s, i) => (
+                  <Reveal key={s.id} delay={i * 40}>
+                    <Link to={`/placements/interview-questions/${s.id}`} className="card pad prep-card">
+                      <span className="feature-ico" aria-hidden="true">{SUBJECT_ICON[s.id] ?? '💬'}</span>
+                      <h3>{s.title}</h3>
+                      <p className="muted">{s.blurb}</p>
+                      <span className="card-cta">{s.count} questions{s.asked ? ` · ${s.asked} asked by companies` : ''} <span aria-hidden="true">→</span></span>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
+              <p className="muted small spaced-top">Interview questions vary by campus, role and interviewer. Company questions are summarised from candidates' public write-ups; the source links are on each company page.</p>
+            </>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+/** /placements/interviews/:company */
+export function PrepInterviewCompany() {
+  const { company } = useParams();
+  const idx = useJson('index.json');
+  const { data, error } = useJson(`interviews/company/${company}.json`);
+  const c = idx.data?.companies.find((x) => x.id === company);
+  useTitle(c ? `${c.name} interview experience and questions` : 'Interview experience');
+  if (error) return <Empty title="Interview experience not found" action={<Link className="btn btn-small" to="/placements/interviews">All interviews</Link>} />;
+  if (!data || !idx.data) return <Loading />;
+  return (
+    <>
+      <PageHero eyebrow={<Link to="/placements/interviews">← Interview preparation</Link>} title={`${c.name} interview experience`} sub={data.summary}>
+        <div className="hero-logo"><CompanyLogo c={c} size={64} /></div>
+      </PageHero>
+      <section className="section tight">
+        <div className="wrap prep-two">
+          <div>
+            <h2 className="section-title">Selection process</h2>
+            <ol className="rounds">
+              {data.rounds.map((r) => (
+                <li key={r.title}><b>{r.title}</b><span className="muted">{r.what}</span></li>
+              ))}
+            </ol>
+
+            <h2 className="section-title spaced">What they focus on</h2>
+            <div className="chips wrap-chips">{data.focus.map((f) => <span key={f} className="chip static">{f}</span>)}</div>
+
+            <h2 className="section-title spaced">Technical questions candidates reported</h2>
+            <ul className="reported">{data.technical.map((t) => <ReportedQ key={t.text} item={t} />)}</ul>
+
+            <h2 className="section-title spaced">HR and managerial questions</h2>
+            <ul className="reported">{data.hr.map((t) => <ReportedQ key={t.text} item={t} />)}</ul>
+
+            <h2 className="section-title spaced">Tips</h2>
+            <ul className="tips">{data.tips.map((t) => <li key={t}>{t}</li>)}</ul>
+
+            <h2 className="section-title spaced">Reported experiences</h2>
+            <div className="rows">
+              {data.reports.map((r) => (
+                <div key={r.label} className="card pad report">
+                  <b>{r.label}</b>
+                  <p className="muted">{r.text}</p>
+                </div>
+              ))}
+            </div>
+            <p className="muted small spaced-top">Summarised in our own words from these public candidate write-ups. Questions change between drives and interviewers.</p>
+            <ul className="sources">
+              {data.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer nofollow">{s.title} ↗</a></li>)}
+            </ul>
+          </div>
+          <aside>
+            <h2 className="section-title">Prepare for {c.name}</h2>
+            <div className="rows">
+              <Link to={`/placements/companies/${company}`} className="mock-card">
+                <span className="mock-num">✓</span>
+                <div><b>Test pattern and mock tests</b><small className="muted">{c.mocks.length} free timed mocks</small></div>
+                <span className="row-go" aria-hidden="true">→</span>
+              </Link>
+              <Link to={`/placements/coding?company=${company}`} className="mock-card">
+                <span className="mock-num">{'</>'}</span>
+                <div><b>Coding questions</b><small className="muted">Previously asked {c.name} coding problems</small></div>
+                <span className="row-go" aria-hidden="true">→</span>
+              </Link>
+              <Link to="/placements/interview-questions/hr" className="mock-card">
+                <span className="mock-num">🤝</span>
+                <div><b>HR answers</b><small className="muted">How to answer the common HR questions</small></div>
+                <span className="row-go" aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </>
+  );
+}
+
+/** /placements/interview-questions/:subject  (answers open on tap; #slug opens and scrolls to one) */
+export function PrepInterviewSubject() {
+  const { subject } = useParams();
+  const idx = useJson('index.json');
+  const { data, error } = useJson(`interviews/subject/${subject}.json`);
+  const [onlyAsked, setOnlyAsked] = useState(false);
+  const [open, setOpen] = useState(() => new Set(typeof window !== 'undefined' && window.location.hash ? [window.location.hash.slice(1)] : []));
+  useTitle(data ? `${data.title} interview questions and answers` : 'Interview questions');
+  useEffect(() => {
+    if (!data || typeof window === 'undefined' || !window.location.hash) return;
+    const el = document.getElementById(window.location.hash.slice(1));
+    if (el) setTimeout(() => el.scrollIntoView({ block: 'start' }), 50);
+  }, [data]);
+  if (error) return <Empty title="Subject not found" action={<Link className="btn btn-small" to="/placements/interviews">All interview questions</Link>} />;
+  if (!data || !idx.data) return <Loading />;
+  const companies = idx.data.companies;
+  const askedCount = data.qs.filter((q) => q.asked.length).length;
+  const list = onlyAsked ? data.qs.filter((q) => q.asked.length) : data.qs;
+  const toggle = (slug) => setOpen((s) => { const n = new Set(s); n.has(slug) ? n.delete(slug) : n.add(slug); return n; });
+  const others = idx.data.interviews.subjects.filter((s) => s.id !== subject);
+  return (
+    <>
+      <PageHero eyebrow={<Link to="/placements/interviews">← Interview preparation</Link>} title={`${data.title} interview questions`} sub={data.blurb} />
+      <section className="section tight">
+        <div className="wrap">
+          {askedCount ? (
+            <div className="chips">
+              <button type="button" className={`chip ${!onlyAsked ? 'on' : ''}`} aria-pressed={!onlyAsked} onClick={() => setOnlyAsked(false)}>All {data.qs.length}</button>
+              <button type="button" className={`chip ${onlyAsked ? 'on' : ''}`} aria-pressed={onlyAsked} onClick={() => setOnlyAsked(true)}>Asked by companies {askedCount}</button>
+            </div>
+          ) : null}
+          <div className="rows qa-list">
+            {list.map((q, i) => {
+              const slug = qSlug(q.id);
+              const isOpen = open.has(slug);
+              return (
+                <div key={q.id} id={slug} className={`qa ${isOpen ? 'open' : ''}`}>
+                  <button type="button" className="qa-q" aria-expanded={isOpen} onClick={() => toggle(slug)}>
+                    <span className="qa-n">{i + 1}</span>
+                    <span className="grow">{q.q}</span>
+                    <span className="qa-plus" aria-hidden="true">{isOpen ? '−' : '+'}</span>
+                  </button>
+                  {q.asked.length ? <div className="qa-asked"><AskedBadges asked={q.asked.map((company) => ({ company }))} companies={companies} /></div> : null}
+                  {isOpen ? <p className="qa-a">{q.a}</p> : null}
+                </div>
+              );
+            })}
+          </div>
+          <h2 className="section-title spaced">More subjects</h2>
+          <div className="chips wrap-chips">
+            {others.map((s) => <Link key={s.id} to={`/placements/interview-questions/${s.id}`} className="chip">{s.title}</Link>)}
+          </div>
+          <p className="muted small spaced-top">Answers written for OU All In One. Company tags show where candidates reported being asked this question in interviews.</p>
+        </div>
+      </section>
+    </>
+  );
+}
+
 /** /placements/companies/:id */
 export function PrepCompany() {
   const { id } = useParams();
@@ -452,18 +856,72 @@ export function PrepCompany() {
   if (!c) return <Empty title="Company not found" action={<Link className="btn btn-small" to="/placements/companies">All companies</Link>} />;
   const totalQ = c.pattern.reduce((a, p) => a + p.questions, 0);
   const totalM = c.pattern.reduce((a, p) => a + p.minutes, 0);
+  const who = interviewFor(c.id) === c.id ? c.name : 'Infosys';
+  const iv = data.interviews?.companies.find((x) => x.company === interviewFor(c.id));
   return (
     <>
       <PageHero eyebrow={<Link to="/placements/companies">← Companies</Link>} title={`${c.name} preparation`} sub={c.about}>
         <div className="hero-logo"><CompanyLogo c={c} size={64} /></div>
       </PageHero>
+      <section className="section tight company-mocks">
+        <div className="wrap">
+          <h2 className="section-title">{c.name} mock tests</h2>
+          <p className="muted small">Free, timed, and built on the reported {c.name} pattern: {totalQ} questions in {totalM} minutes.</p>
+          <div className="mock-grid">{c.mocks.map((m) => <MockCard key={m.id} m={m} />)}</div>
+        </div>
+      </section>
+      <section className="section tight asked-strip">
+        <div className="wrap">
+          <h2 className="section-title">Previously asked in {who}</h2>
+          <p className="muted small">What candidates reported from recent {who} tests and interviews (memory-based), with our own worked answers.</p>
+          <div className="asked-tiles">
+            {c.asked ? (
+              <Link to={`/placements/asked/${c.id}`} className="asked-tile">
+                <span className="asked-ico" aria-hidden="true">★</span>
+                <b>{c.asked} test questions</b>
+                <small className="muted">Aptitude and technical problems with worked solutions</small>
+                <span className="asked-go">Practise →</span>
+              </Link>
+            ) : null}
+            <a href="#coding" className="asked-tile">
+              <span className="asked-ico" aria-hidden="true">{'</>'}</span>
+              <b>{c.coding.length} coding problems</b>
+              <small className="muted">Reported from {who} coding rounds</small>
+              <span className="asked-go">See below ↓</span>
+            </a>
+            {iv ? (
+              <Link to={`/placements/interviews/${interviewFor(c.id)}`} className="asked-tile">
+                <span className="asked-ico" aria-hidden="true">?</span>
+                <b>{iv.technical + iv.hr} interview questions</b>
+                <small className="muted">Rounds, technical and HR questions, tips</small>
+                <span className="asked-go">Read →</span>
+              </Link>
+            ) : null}
+            {!c.asked ? (
+              <div className="asked-tile is-empty">
+                <span className="asked-ico" aria-hidden="true">★</span>
+                <b>Test questions</b>
+                <small className="muted">Not enough reliable reports from {who} tests yet, so we have not listed any. The mock tests above follow the real pattern.</small>
+              </div>
+            ) : null}
+          </div>
+          <nav className="jump" aria-label="On this page">
+            <span className="muted small">On this page:</span>
+            <a href="#pattern" className="chip">Test pattern</a>
+            <a href="#coding" className="chip">Coding questions</a>
+            <a href="#tips" className="chip">Tips</a>
+            {c.essay ? <a href="#essay" className="chip">Essay topics</a> : null}
+            <a href="#sections" className="chip">Practise sections</a>
+          </nav>
+        </div>
+      </section>
       <section className="section tight progress-strip">
         <div className="wrap"><CompanyProgress c={c} p={p} /></div>
       </section>
       <section className="section tight">
         <div className="wrap prep-two">
           <div>
-            <h2 className="section-title">Test pattern</h2>
+            <h2 className="section-title" id="pattern">Test pattern</h2>
             <div className="table-wrap">
               <table className="pattern">
                 <thead>
@@ -480,16 +938,6 @@ export function PrepCompany() {
             <p className="muted small">Reported pattern from recent drives. Companies change it between drives, so always follow your official invitation.</p>
             {c.extra ? <p className="note">{c.extra}</p> : null}
 
-            {c.asked ? (
-              <Link to={`/placements/asked/${c.id}`} className="mock-card asked-card">
-                <span className="mock-num">★</span>
-                <div>
-                  <b>Previously asked {c.name} questions</b>
-                  <small className="muted">{c.asked} memory-based problems reported by candidates, with worked solutions</small>
-                </div>
-                <span className="row-go" aria-hidden="true">→</span>
-              </Link>
-            ) : null}
             {c.practice ? (
               <Link to={`/placements/practice/${c.id}`} className="mock-card">
                 <span className="mock-num">✎</span>
@@ -501,32 +949,29 @@ export function PrepCompany() {
               </Link>
             ) : null}
 
-            <h2 className="section-title spaced">Tips</h2>
+
+            <h2 className="section-title spaced" id="tips">Tips</h2>
             <ul className="tips">{c.tips.map((t) => <li key={t}>{t}</li>)}</ul>
 
             {c.essay ? (
               <>
-                <h2 className="section-title spaced">Essay practice topics</h2>
+                <h2 className="section-title spaced" id="essay">Essay practice topics</h2>
                 <ul className="tips">{c.essay.map((t) => <li key={t}>{t}</li>)}</ul>
               </>
             ) : null}
 
-            <h2 className="section-title spaced">Coding practice</h2>
+            <h2 className="section-title spaced" id="coding">Previously asked coding questions</h2>
+            <p className="muted small">Problems candidates reported from {c.id === 'infytq' ? 'Infosys' : c.name} coding rounds (memory-based), rewritten with our own examples.</p>
+            <CodingSoon />
             <div className="rows">
               {c.coding.map((k) => {
-                const p = data.coding[k];
-                return (
-                  <details key={k} className="coding">
-                    <summary><b>{p.title}</b></summary>
-                    <p>{p.statement}</p>
-                    <pre className="code"><code>{p.sample}</code></pre>
-                    <p className="muted small"><b>Hint:</b> {p.hint}</p>
-                  </details>
-                );
+                const prob = data.coding.find((x) => x.id === k);
+                return prob ? <CodingRow key={k} prob={prob} companies={data.companies} /> : null;
               })}
             </div>
+            <Link to={`/placements/coding?company=${c.id === 'infytq' ? 'infosys' : c.id}`} className="btn btn-ghost btn-small spaced-top">All coding practice →</Link>
 
-            <h2 className="section-title spaced">Practise the sections</h2>
+            <h2 className="section-title spaced" id="sections">Practise the sections</h2>
             <div className="chips wrap-chips">
               {[['aptitude', 'Aptitude'], ['reasoning', 'Reasoning'], ['verbal', 'Verbal'], ['technical', 'Technical (mixed)'], ['c', 'C'], ['java', 'Java'], ['python', 'Python']].map(([gid, label]) => (
                 <Link key={gid} to={`/placements/${gid}`} className="chip">{label}</Link>
@@ -534,8 +979,14 @@ export function PrepCompany() {
             </div>
           </div>
           <aside>
-            <h2 className="section-title">{c.name} mock tests</h2>
-            <div className="rows">{c.mocks.map((m) => <MockCard key={m.id} m={m} />)}</div>
+            <h2 className="section-title">More for {c.name}</h2>
+            <div className="rows">
+              <Link to={`/placements/coding?company=${interviewFor(c.id)}`} className="mock-card">
+                <span className="mock-num" aria-hidden="true">{'</>'}</span>
+                <div><b>Coding questions</b><small className="muted">{c.coding.length} previously asked problems</small></div>
+                <span className="row-go" aria-hidden="true">→</span>
+              </Link>
+            </div>
             <a className="btn btn-ghost btn-small spaced-top" href={c.careers} target="_blank" rel="noreferrer">Official careers page ↗</a>
             <p className="muted small spaced-top">{c.name} name and logo are trademarks of their owner, shown only to identify the company. OU All In One is not affiliated with {c.name}.</p>
           </aside>
@@ -690,7 +1141,7 @@ export function PrepMock() {
                       ))}
                     </div>
                     {mine === undefined ? <p className="muted small">Skipped</p> : null}
-                    {q.ex ? <p className="explain">{q.ex}</p> : null}
+                    {q.ex ? <Explanation ex={q.ex} answer={q.options[q.a]} /> : null}
                   </div>
                 );
               })}

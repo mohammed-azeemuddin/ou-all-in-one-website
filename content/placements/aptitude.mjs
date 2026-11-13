@@ -2,6 +2,7 @@
  * Quantitative aptitude. Original questions generated from templates; every answer is computed.
  */
 import { gcd, inr, int, lcm, numMcq, pick, mcq, fmtNum, shuffle } from './lib.mjs';
+import { EXTRA_APTITUDE } from './aptitude-more.mjs';
 
 const NAMES = ['Ravi', 'Sana', 'Arjun', 'Meera', 'Imran', 'Divya', 'Kiran', 'Ayesha', 'Rahul', 'Farhan', 'Priya', 'Zoya', 'Vikram', 'Nikhil', 'Fatima', 'Rohit'];
 const two = (r) => {
@@ -25,7 +26,7 @@ export const percentages = (r) =>
       const base = int(r, 4, 30) * 50;
       const up = pick(r, [10, 20, 25, 30, 40, 50]);
       const nw = base + (base * up) / 100;
-      return numMcq(r, { q: `A number increased by ${up}% becomes ${fmtNum(nw)}. What is the number?`, ans: base, ex: `Number × ${1 + up / 100} = ${fmtNum(nw)}, so number = ${fmtNum(nw)} ÷ ${1 + up / 100} = ${base}.` });
+      return numMcq(r, { q: `A number increased by ${up}% becomes ${fmtNum(nw)}. What is the number?`, ans: base, ex: `An increase of ${up}% means the number is multiplied by (1 + ${up}/100) = ${1 + up / 100}. So number × ${1 + up / 100} = ${fmtNum(nw)}. Number = ${fmtNum(nw)} ÷ ${1 + up / 100} = ${base}.` });
     },
     () => {
       const a = pick(r, [10, 20, 25, 30, 40, 50]);
@@ -140,7 +141,7 @@ export const compoundInterest = (r) =>
       const rate = pick(r, [10, 20, 25, 50]);
       const p = int(r, 2, 10) * 1000;
       const amt = p * (1 + rate / 100) ** 2;
-      return numMcq(r, { q: `A sum becomes ${inr(amt)} in 2 years at ${rate}% compound interest per annum. Find the sum.`, ans: p, f: inr, ex: `P = ${amt} ÷ (1 + ${rate}/100)² = ${amt} ÷ ${(1 + rate / 100) ** 2} = ${inr(p)}.` });
+      return numMcq(r, { q: `A sum becomes ${inr(amt)} in 2 years at ${rate}% compound interest per annum. Find the sum.`, ans: p, f: inr, ex: `With compound interest, amount = P × (1 + R/100)², so P = amount ÷ (1 + R/100)². Here 1 + ${rate}/100 = ${fmtNum(1 + rate / 100)}, and squared that is ${fmtNum((1 + rate / 100) ** 2)}. P = ${fmtNum(amt)} ÷ ${fmtNum((1 + rate / 100) ** 2)} = ${inr(p)}.` });
     },
   ])();
 
@@ -179,7 +180,7 @@ export const ratio = (r) =>
         q: `Two numbers are in the ratio ${a}:${b} and their sum is ${x + y}. If ${add} is added to each, what is the new ratio?`,
         correct: ans,
         wrong: [`${a}:${b}`, `${a + add}:${b + add}`, `${b}:${a}`, `${x}:${y + add}`],
-        ex: `The numbers are ${x} and ${y}. After adding ${add}: ${x + add}:${y + add} = ${ans}.`,
+        ex: `Total ratio parts = ${a} + ${b} = ${a + b}. One part = ${x + y} ÷ ${a + b} = ${k}. The numbers are ${a} × ${k} = ${x} and ${b} × ${k} = ${y}. After adding ${add} to each: ${x + add} and ${y + add}. New ratio ${x + add}:${y + add}; divide both by ${gcd(x + add, y + add)} to get ${ans}.`,
       });
     },
   ])();
@@ -272,7 +273,7 @@ export const timeWork = (r) =>
       const daysB = Math.round(left * b * 100) / 100;
       if (left <= 0) return timeWork(r);
       const [x, y] = two(r);
-      return numMcq(r, { q: `${x} alone can do a job in ${a} days and ${y} alone in ${b} days. They work together for ${worked} days and then ${x} leaves. How many more days will ${y} take to finish?`, ans: daysB, f: u('day'), ex: `In ${worked} days they finish ${worked} × (1/${a} + 1/${b}) = ${fmtNum(Math.round((1 - left) * 1000) / 1000)}. Remaining ${fmtNum(Math.round(left * 1000) / 1000)} at 1/${b} per day = ${fmtNum(daysB)} days.` });
+      return numMcq(r, { q: `${x} alone can do a job in ${a} days and ${y} alone in ${b} days. They work together for ${worked} days and then ${x} leaves. How many more days will ${y} take to finish?`, ans: daysB, f: u('day'), ex: `Each day ${x} does 1/${a} and ${y} does 1/${b} of the job. In ${worked} days together they finish ${worked} × (1/${a} + 1/${b}) = ${fmtNum(Math.round((1 - left) * 1000) / 1000)} of it. Work left = 1 − ${fmtNum(Math.round((1 - left) * 1000) / 1000)} = ${fmtNum(Math.round(left * 1000) / 1000)}. ${y} alone does 1/${b} a day, so the rest takes ${fmtNum(Math.round(left * 1000) / 1000)} × ${b} = ${fmtNum(daysB)} days.` });
     },
   ])();
 
@@ -304,7 +305,7 @@ export const pipes = (r) =>
       const left = 1 - k * (1 / a + 1 / b);
       if (left <= 0) return pipes(r);
       const more = Math.round(left * b * 100) / 100;
-      return numMcq(r, { q: `Pipes A and B can fill a tank in ${a} and ${b} hours. Both are opened for ${k} hours, then A is closed. How much longer will B take to fill the tank?`, ans: more, f: u('hour'), ex: `In ${k} hours they fill ${k} × (1/${a} + 1/${b}). The rest (${fmtNum(Math.round(left * 1000) / 1000)} of the tank) at 1/${b} per hour takes ${fmtNum(more)} hours.` });
+      return numMcq(r, { q: `Pipes A and B can fill a tank in ${a} and ${b} hours. Both are opened for ${k} hours, then A is closed. How much longer will B take to fill the tank?`, ans: more, f: u('hour'), ex: `Together the pipes fill 1/${a} + 1/${b} of the tank per hour. In ${k} hours: ${k} × (1/${a} + 1/${b}) = ${fmtNum(Math.round((1 - left) * 1000) / 1000)} of the tank. Left = 1 − ${fmtNum(Math.round((1 - left) * 1000) / 1000)} = ${fmtNum(Math.round(left * 1000) / 1000)}. B fills 1/${b} per hour, so it needs ${fmtNum(Math.round(left * 1000) / 1000)} × ${b} = ${fmtNum(more)} hours.` });
     },
   ])();
 
@@ -482,12 +483,12 @@ export const probability = (r) =>
       const target = int(r, 3, 11);
       let ways = 0;
       for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) if (a + b === target) ways++;
-      return pmcq(r, { q: `Two dice are thrown. What is the probability that the sum is ${target}?`, correct: frac(ways, 36), wrong: [frac(ways + 1, 36), frac(Math.max(1, ways - 1) + 2, 36), `1/6`, `1/12`, frac(ways, 12)], ex: `${ways} of the 36 outcomes give ${target}, so ${frac(ways, 36)}.` });
+      return pmcq(r, { q: `Two dice are thrown. What is the probability that the sum is ${target}?`, correct: frac(ways, 36), wrong: [frac(ways + 1, 36), frac(Math.max(1, ways - 1) + 2, 36), `1/6`, `1/12`, frac(ways, 12)], ex: `Two dice give 6 × 6 = 36 equally likely outcomes. Pairs with sum ${target}: ${[1, 2, 3, 4, 5, 6].filter((d) => target - d >= 1 && target - d <= 6).map((d) => `(${d}, ${target - d})`).join(', ')}, which is ${ways} outcomes. Probability = ${ways}/36 = ${frac(ways, 36)}.` });
     },
     () => {
       const red = int(r, 2, 8), blue = int(r, 2, 8), green = int(r, 1, 6);
       const t = red + blue + green;
-      return pmcq(r, { q: `A bag has ${red} red, ${blue} blue and ${green} green balls. One ball is drawn at random. What is the probability that it is blue?`, correct: frac(blue, t), wrong: [frac(red, t), frac(green, t), frac(blue, t - blue), frac(blue + 1, t)], ex: `${blue} blue out of ${t} balls = ${frac(blue, t)}.` });
+      return pmcq(r, { q: `A bag has ${red} red, ${blue} blue and ${green} green balls. One ball is drawn at random. What is the probability that it is blue?`, correct: frac(blue, t), wrong: [frac(red, t), frac(green, t), frac(blue, t - blue), frac(blue + 1, t)], ex: `Total balls = ${red} + ${blue} + ${green} = ${t}, all equally likely. Favourable (blue) = ${blue}. Probability = ${blue}/${t} = ${frac(blue, t)}.` });
     },
     () => {
       const n = pick(r, [2, 3]);
@@ -572,3 +573,12 @@ export const APTITUDE_TOPICS = [
   ['mensuration', 'Mensuration', mensuration, 'Areas, perimeters and volumes.'],
   ['data-interpretation', 'Data Interpretation', dataInterpretation, 'Reading tables: averages and percentage changes.'],
 ];
+
+// Mix in the extra question types (aptitude-more.mjs) so each topic has many kinds of question,
+// not one kind with different numbers. The build caps how many of one kind a topic shows.
+for (const t of APTITUDE_TOPICS) {
+  const extra = EXTRA_APTITUDE[t[0]];
+  if (!extra?.length) continue;
+  const base = t[2];
+  t[2] = (r) => (r() < 0.3 ? base(r) : extra[Math.floor(r() * extra.length)](r));
+}

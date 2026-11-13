@@ -15,18 +15,26 @@ import { parseName } from '../lib/subjects';
 export function Section({ section }) {
   const s = SECTIONS[section];
   useTitle(s.title);
+  // Counts come from the static /data/home.json (no Firestore reads); courses with nothing yet are hidden.
+  const [counts, setCounts] = useState(null);
+  useEffect(() => {
+    let live = true;
+    fetch('/data/home.json').then((r) => (r.ok ? r.json() : null)).then((d) => live && setCounts(d?.counts ?? null)).catch(() => {});
+    return () => { live = false; };
+  }, []);
+  const courses = counts ? COURSES.filter((c) => (counts[`${section}:${c.id}`] ?? 1) > 0) : COURSES;
   return (
     <>
       <PageHero eyebrow={section === 'papers' ? 'Question papers' : 'Notes'} title={s.title} sub={s.blurb} art={s.gif} />
       <section className="section">
         <div className="wrap course-grid big">
-          {COURSES.map((c, i) => (
+          {courses.map((c, i) => (
             <Reveal key={c.id} delay={i * 70}>
               <Link to={`/${section}/${c.id}`} className="course-tile">
                 <span className="course-ico" aria-hidden="true">{c.icon}</span>
                 <span>
                   <b>{c.title}</b>
-                  <small className="muted">{c.sub}</small>
+                  <small className="muted">{c.sub}{counts?.[`${section}:${c.id}`] ? ` · ${counts[`${section}:${c.id}`]} ${section === 'papers' ? 'paper' : 'note'}${counts[`${section}:${c.id}`] === 1 ? '' : 's'}` : ''}</small>
                 </span>
                 <span className="row-go" aria-hidden="true">→</span>
               </Link>

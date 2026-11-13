@@ -66,7 +66,7 @@ export function numMcq(r, { q, ans, f = fmtNum, ex, near, code, lang = 'pseudo' 
 
 /** The shape of a question with numbers and names removed, used to spot the same template. */
 export const templateOf = (item) => {
-  const t = (item.q + '|' + (item.code ?? '').split('\n')[0]).replace(/[\d.,₹%]+/g, '#').replace(/\b[A-Z][a-z]+\b/g, 'N');
+  const t = (item.q + '|' + (item.code ?? '').split('\n')[0]).replace(/[\d.,₹%]+/g, '#').replace(/\b[A-Z][a-z]+\b/g, 'N').replace(/\b[A-Z]{1,4}\d*\b/g, 'L');
   return t.length <= 60 ? t : `${t.slice(0, 30)}…${t.slice(-30)}`;
 };
 

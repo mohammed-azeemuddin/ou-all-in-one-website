@@ -1,5 +1,5 @@
 /**
- * Company-wise test patterns (researched November 2026 from public prep guides; companies change
+ * Company-wise test patterns (researched November 2026 from public prep guides and re-checked 13 Nov 2026; companies change
  * them between drives, so every page tells students to check their invitation).
  * Each section: [title, pool, questions, minutes]. Pools are defined in scripts/build-placements.mjs.
  */
@@ -18,7 +18,6 @@ export const COMPANIES = [
     ],
     extra: 'The real test also has an Advanced Coding section (2–3 problems). Practise the coding problems below in C, C++, Java or Python.',
     tips: ['There is usually no negative marking, so answer every question.', 'Each section has its own timer; you cannot go back to a finished section.', 'Foundation sections decide Ninja; the Advanced sections open Digital and Prime roles.'],
-    coding: ['second-largest', 'vowel-count', 'prime-range'],
   },
   {
     id: 'infosys',
@@ -34,7 +33,6 @@ export const COMPANIES = [
       ['Puzzle Solving', 'puzzles', 4, 10],
     ],
     tips: ['Maths has few questions but a long timer; they are lengthier problems.', 'Pseudocode carries more marks per question; trace loops carefully on paper.', 'Verbal is fast: about a minute per question.'],
-    coding: ['palindrome', 'array-rotation', 'frequency'],
   },
   {
     id: 'infytq',
@@ -43,12 +41,11 @@ export const COMPANIES = [
     about: 'InfyTQ was Infosys\'s certification route for engineering students, testing Python programming and databases. It now runs through Infosys Springboard and its rules change, so check the current details before you rely on it. The practice here covers the same skills.',
     careers: 'https://infyspringboard.onwingspan.com/',
     sections: [
-      ['Python Programming', 'python', 20, 25],
+      ['Python Programming', 'python', 10, 15],
       ['Database Management (DBMS/SQL)', 'dbms', 10, 15],
     ],
-    extra: 'The certification has also included hands-on Python coding. Try the coding problems below in Python.',
+    extra: 'The certification round also has two hands-on coding problems (the whole round is about 3 hours). Try the coding problems below in Python.',
     tips: ['Know Python lists, dictionaries, slicing and string methods well.', 'Revise SQL joins, GROUP BY with HAVING, keys and normal forms.'],
-    coding: ['frequency', 'palindrome', 'second-largest'],
   },
   {
     id: 'wipro-elite-nth',
@@ -57,14 +54,13 @@ export const COMPANIES = [
     about: 'Wipro hires freshers through the Elite National Talent Hunt: an aptitude test, an essay and a coding round. Registration usually opens between July and September.',
     careers: 'https://careers.wipro.com/',
     sections: [
-      ['Quantitative Ability', 'quant', 16, 16],
-      ['Logical Ability', 'reasoning', 14, 14],
-      ['Verbal Ability', 'verbal', 22, 18],
+      ['Quantitative Ability', 'quant', 12, 16],
+      ['Logical Ability', 'reasoning', 12, 16],
+      ['Verbal Ability', 'verbal', 12, 16],
     ],
     extra: 'The real test adds a 20-minute essay and two coding problems in 60 minutes. Practise both below.',
     tips: ['Keep the essay simple and structured: introduction, two or three points, conclusion.', 'Aim for both coding problems to pass basic test cases rather than one perfect solution.'],
     essay: ['Should colleges make internships compulsory for engineering students?', 'Is artificial intelligence creating more jobs than it replaces?', 'How can technology improve public transport in Indian cities?'],
-    coding: ['vowel-count', 'array-rotation', 'prime-range'],
   },
   {
     id: 'cognizant-genc',
@@ -79,7 +75,6 @@ export const COMPANIES = [
     ],
     extra: 'The technical round focuses on coding and SQL (and Java or Python depending on the cluster).',
     tips: ['Logical reasoning is the longest section; practise seating, syllogisms and series.', 'Revise basic SQL queries for the technical round.'],
-    coding: ['second-largest', 'frequency', 'palindrome'],
   },
   {
     id: 'accenture',
@@ -96,7 +91,6 @@ export const COMPANIES = [
     ],
     extra: 'The real assessment also has two coding problems in about 45 minutes and an AI-graded spoken English test.',
     tips: ['The technical section mixes many small topics; revise networking basics and Excel functions.', 'In the communication test, speak clearly at a steady pace.'],
-    coding: ['array-rotation', 'vowel-count', 'second-largest'],
   },
   {
     id: 'capgemini',
@@ -110,7 +104,6 @@ export const COMPANIES = [
     ],
     extra: 'The game-based aptitude round uses short puzzles (memory, patterns, grids). Stay calm and accurate; speed improves with practice.',
     tips: ['Pseudocode is the most important MCQ section; practise loops, recursion and bitwise operations.', 'The behavioural section has no right answers; answer honestly and consistently.'],
-    coding: ['palindrome', 'prime-range', 'frequency'],
   },
   {
     id: 'hcltech',
@@ -125,7 +118,6 @@ export const COMPANIES = [
       ['Technical', 'cs', 15, 15],
     ],
     tips: ['Each section has a separate time limit; move on quickly from hard questions.', 'Technical questions cover C, OOP, DBMS and networking basics.'],
-    coding: ['second-largest', 'vowel-count', 'array-rotation'],
   },
   {
     id: 'deloitte',
@@ -134,14 +126,13 @@ export const COMPANIES = [
     about: 'Deloitte\'s National Level Assessment covers verbal, quantitative and logical ability, technical MCQs and coding. The exact sections vary by business area.',
     careers: 'https://www2.deloitte.com/in/en/careers.html',
     sections: [
-      ['Verbal Ability', 'verbal', 15, 15],
-      ['Quantitative Ability', 'quant', 15, 20],
-      ['Logical Reasoning', 'reasoning', 15, 20],
-      ['Technical MCQs', 'cs', 20, 25],
+      ['Verbal Ability', 'verbal', 13, 12],
+      ['Quantitative Ability', 'quant', 10, 15],
+      ['Logical Reasoning', 'reasoning', 12, 13],
+      ['Technical MCQs', 'cs', 30, 20],
     ],
-    extra: 'Some drives add two coding questions. Practise the problems below.',
+    extra: 'The real test adds two coding questions (about 30 minutes) after the MCQs, all in one 90-minute session. Practise the problems below.',
     tips: ['Technical MCQs often include DBMS, networking and programming output questions.', 'Watch the overall timer as well as each section.'],
-    coding: ['frequency', 'prime-range', 'palindrome'],
   },
   {
     id: 'tech-mahindra',
@@ -150,7 +141,7 @@ export const COMPANIES = [
     about: 'Tech Mahindra\'s online assessment (often on AMCAT/SHL) includes aptitude, logical reasoning, English and a short technical section, followed by an essay and a psychometric test.',
     careers: 'https://careers.techmahindra.com/',
     sections: [
-      ['Quantitative Aptitude', 'quant', 15, 20],
+      ['Quantitative Aptitude', 'quant', 12, 15],
       ['Logical Reasoning', 'reasoning', 12, 15],
       ['English Ability', 'verbal', 15, 15],
       ['Technical', 'cs', 10, 10],
@@ -158,7 +149,6 @@ export const COMPANIES = [
     extra: 'The process also has an essay and a psychometric test with no right or wrong answers.',
     essay: ['Describe a challenge you faced in college and how you handled it.', 'Should social media platforms verify the age of their users?'],
     tips: ['The psychometric test checks consistency; answer honestly.', 'Plan your essay for two minutes before writing.'],
-    coding: ['vowel-count', 'second-largest', 'array-rotation'],
   },
   {
     id: 'ltimindtree',
@@ -167,22 +157,12 @@ export const COMPANIES = [
     about: 'LTIMindtree\'s fresher assessment covers quantitative, logical and verbal ability with technical MCQs, and some drives add coding. Recent drives have used the WeCP platform.',
     careers: 'https://www.ltimindtree.com/careers/',
     sections: [
-      ['Quantitative Aptitude', 'quant', 15, 20],
-      ['Logical Reasoning', 'reasoning', 15, 20],
+      ['Quantitative Aptitude', 'quant', 10, 20],
+      ['Logical Reasoning', 'reasoning', 15, 25],
       ['Verbal Ability', 'verbal', 20, 20],
       ['Technical MCQs', 'cs', 10, 15],
     ],
+    extra: 'The real test also has two coding problems (about 60 minutes) and a short psychometric test.',
     tips: ['Some drives have negative marking; avoid blind guesses unless you can rule out options.', 'Revise OOP, DBMS and basic data structures for the technical part.'],
-    coding: ['palindrome', 'frequency', 'prime-range'],
   },
 ];
-
-/** Original coding practice problems shown on company pages. */
-export const CODING = {
-  'second-largest': { title: 'Second largest number', statement: 'Read N integers and print the second largest distinct value. If it does not exist, print -1.', sample: 'Input: 5\n4 9 2 9 7\nOutput: 7', hint: 'Track the largest and second largest in one pass, skipping values equal to the largest.' },
-  'vowel-count': { title: 'Count vowels', statement: 'Read a line of text and print how many vowels (a, e, i, o, u, either case) it contains.', sample: 'Input: Osmania University\nOutput: 8', hint: 'Lower-case the text and check each character against "aeiou".' },
-  'prime-range': { title: 'Primes in a range', statement: 'Read two integers L and R and print all prime numbers between them (inclusive), separated by spaces.', sample: 'Input: 10 30\nOutput: 11 13 17 19 23 29', hint: 'Test divisibility only up to the square root of each number.' },
-  palindrome: { title: 'Palindrome check', statement: 'Read a string and print YES if it reads the same forwards and backwards (ignoring case), otherwise NO.', sample: 'Input: Level\nOutput: YES', hint: 'Compare characters from both ends moving inwards.' },
-  'array-rotation': { title: 'Rotate an array', statement: 'Read N, then N integers, then K. Rotate the array to the right by K positions and print it.', sample: 'Input: 5\n1 2 3 4 5\n2\nOutput: 4 5 1 2 3', hint: 'Use K mod N; the element at index i moves to (i + K) mod N.' },
-  frequency: { title: 'Character frequency', statement: 'Read a lowercase word and print each distinct character with its count, in order of first appearance.', sample: 'Input: banana\nOutput: b1 a3 n2', hint: 'Use a dictionary or an array of 26 counts, and remember first-appearance order.' },
-};

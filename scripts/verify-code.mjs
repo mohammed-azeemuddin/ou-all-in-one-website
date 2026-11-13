@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { C, CPP } from '../content/placements/tech-c-cpp.mjs';
 import { JAVA, PYTHON } from '../content/placements/tech-java-python.mjs';
 import { SQL_CHECKS } from '../content/placements/tech-sql.mjs';
+import { PROBLEMS } from '../content/placements/coding.mjs';
 
 const BANKS = { c: C, cpp: CPP, java: JAVA, python: PYTHON };
 const want = process.argv.slice(2);
@@ -78,6 +79,26 @@ if (doSql) {
       console.log(`✗ sql: failed\n${query}\n${e.stderr?.toString() ?? e.message}\n`);
     }
   }
+}
+// Coding practice: every published sample must equal what the Python reference solution prints.
+if (!want.length || want.includes('coding')) {
+  let samples = 0;
+  for (const p of PROBLEMS) {
+    for (const s of p.samples) {
+      try {
+        const out = execFileSync('python3', ['-I', '-c', p.solution], { input: `${s.in}\n`, timeout: 20000, stdio: ['pipe', 'pipe', 'pipe'] }).toString().trimEnd();
+        samples++;
+        if (out !== s.out) {
+          bad++;
+          console.log(`✗ coding ${p.id}: expected "${s.out}" got "${out}"`);
+        }
+      } catch (e) {
+        bad++;
+        console.log(`✗ coding ${p.id}: solution failed\n${e.stderr?.toString() ?? e.message}`);
+      }
+    }
+  }
+  console.log(`${PROBLEMS.length} coding problems, ${samples} samples checked`);
 }
 console.log(`${checked} code questions run, ${bad} wrong`);
 process.exit(bad ? 1 : 0);

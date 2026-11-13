@@ -3,6 +3,7 @@
  * (seating puzzles are solved by brute force to make sure exactly one answer fits).
  */
 import { int, mcq, numMcq, pick, shuffle, fmtNum } from './lib.mjs';
+import { EXTRA_REASONING, logicalArithmetic } from './reasoning-more.mjs';
 
 const NAMES = ['Asha', 'Bilal', 'Chetan', 'Deepa', 'Esha', 'Farhan', 'Gopal', 'Hina', 'Irfan', 'Jaya', 'Kunal', 'Lata', 'Manoj', 'Nida'];
 const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -143,7 +144,7 @@ export const directionSense = (r) => {
     q: `${story}. How far is ${who} from the starting point, and in which direction?`,
     correct,
     wrong: [`${dist} m, ${opp[sector]}`, `${Math.abs(x) + Math.abs(y)} m, ${sector}`, `${dist + 5} m, ${sector}`, `${dist} m, ${pick(r, DIRS.filter((d) => d !== sector && d !== opp[sector]))}`],
-    ex: `Net movement: ${Math.abs(x)} m ${x >= 0 ? 'East' : 'West'} and ${Math.abs(y)} m ${y >= 0 ? 'North' : 'South'}. Straight-line distance = √(${x}² + ${y}²) = ${dist} m towards the ${sector}.`,
+    ex: `Net movement: ${Math.abs(x)} m ${x >= 0 ? 'East' : 'West'} and ${Math.abs(y)} m ${y >= 0 ? 'North' : 'South'}. Straight-line distance = √(${Math.abs(x)}² + ${Math.abs(y)}²) = ${dist} m towards the ${sector}.`,
   });
 };
 
@@ -392,4 +393,13 @@ export const REASONING_TOPICS = [
   ['calendars', 'Calendars', calendars, 'Day of the week for a date.'],
   ['ranking-order', 'Ranking and Order', ranking, 'Positions from the left, right, top and bottom.'],
   ['alphabet-test', 'Alphabet Test', alphabetPosition, 'Letter positions in the alphabet.'],
+  ['logical-arithmetic', 'Logical Arithmetic', logicalArithmetic, 'Quick everyday reasoning with numbers.'],
 ];
+
+// Mix in the extra question types (reasoning-more.mjs) so each topic has many kinds of question.
+for (const t of REASONING_TOPICS) {
+  const extra = EXTRA_REASONING[t[0]];
+  if (!extra?.length) continue;
+  const base = t[2];
+  t[2] = (r) => (r() < 0.25 ? base(r) : extra[Math.floor(r() * extra.length)](r));
+}

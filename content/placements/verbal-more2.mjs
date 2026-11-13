@@ -22,6 +22,9 @@ export const FILL2 = [
 ];
 
 export const ERR2 = [
+  ['Neither the manager', 'nor his assistants', 'was informed.', 'C', 'With "neither ... nor", the verb agrees with the nearer subject, "assistants": "were informed".'],
+  ['She has been working', 'here since', 'five years.', 'C', 'Use "for" with a length of time: "for five years". "Since" goes with a point in time.'],
+  ['Each of the players', 'has been given', 'a new jersey.', 'No error', '"Each" is singular, so "has been given" is correct.'],
   ['The teacher as well as', 'the students', 'were present.', 'C', 'With "as well as", the verb follows the first subject: "was present".'],
   ['He did not knew', 'the answer to', 'the last question.', 'A', 'After "did not" use the base form: "did not know".'],
   ['One of my friend', 'is going', 'to Canada next month.', 'A', '"One of" takes a plural noun: "one of my friends".'],

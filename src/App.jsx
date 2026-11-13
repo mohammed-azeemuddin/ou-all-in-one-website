@@ -4,7 +4,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { Footer, Header } from './components/ui';
 import Home from './pages/Home';
 import { Contact, CourseList, Folder, Labs, NotFound, SearchPage, Section, SubjectPage, Tools, Viewer } from './pages/Pages';
-import { PrepCompanies, PrepCompany, PrepGroup, PrepHub, PrepMock, PrepTopic } from './pages/Prep';
+import { PrepCoding, PrepCodingProblem, PrepCompanies, PrepInterviewCompany, PrepInterviews, PrepInterviewSubject, PrepCompany, PrepGroup, PrepHub, PrepMock, PrepTopic } from './pages/Prep';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -30,6 +30,11 @@ export default function App() {
           <Route path="/placements/companies" element={<PrepCompanies />} />
           <Route path="/placements/companies/:id" element={<PrepCompany />} />
           <Route path="/placements/mock/:id" element={<PrepMock />} />
+          <Route path="/placements/coding" element={<PrepCoding />} />
+          <Route path="/placements/interviews" element={<PrepInterviews />} />
+          <Route path="/placements/interviews/:company" element={<PrepInterviewCompany />} />
+          <Route path="/placements/interview-questions/:subject" element={<PrepInterviewSubject />} />
+          <Route path="/placements/coding/:id" element={<PrepCodingProblem />} />
           <Route path="/placements/:group" element={<PrepGroup />} />
           <Route path="/placements/:group/:topic" element={<PrepTopic />} />
           <Route path="/tools" element={<Tools />} />

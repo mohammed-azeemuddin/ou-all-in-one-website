@@ -3,6 +3,9 @@
  * Rows: [question, code|null, correct, wrong1, wrong2, wrong3, explanation, topic]
  */
 export const AI2 = [
+  ['Which activation function outputs values between 0 and 1?', null, 'Sigmoid', 'ReLU', 'Tanh', 'Linear', 'Sigmoid squashes any input into the range 0 to 1, which is why it is used for probabilities.', 'Deep learning'],
+  ['In a transformer, what lets each token weigh the importance of every other token?', null, 'Self-attention', 'Pooling', 'Dropout', 'Batch normalisation', 'Self-attention scores how relevant each token is to every other token in the input.', 'Gen AI'],
+  ['Which technique gives an LLM relevant documents from a knowledge base before it answers?', null, 'Retrieval-augmented generation (RAG)', 'Gradient descent', 'Data augmentation', 'Early stopping', 'RAG retrieves matching passages and adds them to the prompt so answers use that information.', 'Gen AI'],
   ['Which algorithm groups unlabelled data into k clusters?', null, 'K-means', 'Linear regression', 'Naive Bayes', 'Logistic regression', 'K-means is unsupervised clustering.', 'Algorithms'],
   ['Overfitting means a model:', null, 'Does well on training data but poorly on new data', 'Does poorly on training data', 'Has too little data to train', 'Always generalises well', 'It has memorised noise in the training data.', 'Model evaluation'],
   ['Which technique reduces overfitting by randomly switching off neurons during training?', null, 'Dropout', 'Batch size', 'Padding', 'Pooling', 'Dropout forces the network not to rely on single neurons.', 'Deep learning'],
@@ -18,6 +21,12 @@ export const AI2 = [
 ];
 
 export const NETSEC2 = [
+  ['Which port does HTTPS use by default?', null, '443', '80', '21', '25', 'HTTPS uses TCP port 443; plain HTTP uses port 80.', 'Networking'],
+  ['Which protocol translates domain names into IP addresses?', null, 'DNS', 'DHCP', 'FTP', 'ARP', 'The Domain Name System maps names such as example.com to IP addresses.', 'Networking'],
+  ['Which protocol finds the MAC address for a known IP address on a local network?', null, 'ARP', 'DNS', 'ICMP', 'SMTP', 'The Address Resolution Protocol maps an IPv4 address to a MAC address on the local network.', 'Networking'],
+  ['In cloud computing, which model gives you virtual machines that you manage yourself?', null, 'IaaS', 'SaaS', 'PaaS', 'FaaS', 'Infrastructure as a Service provides virtual machines, storage and networks; you manage the operating system and software.', 'Cloud'],
+  ['What does multi-factor authentication add to a password?', null, 'A second proof of identity, such as a one-time code', 'A longer password', 'Encryption of the password file', 'A faster login', 'MFA asks for something extra (a code, a device, a fingerprint), so a stolen password alone is not enough.', 'Security'],
+  ['Which attack tricks users into revealing passwords through fake emails or websites?', null, 'Phishing', 'Brute force', 'SQL injection', 'Man-in-the-middle', 'Phishing imitates a trusted sender or site to steal credentials.', 'Security'],
   ['How many layers does the OSI model have?', null, '7', '4', '5', '6', 'Physical, data link, network, transport, session, presentation, application.', 'Networking'],
   ['Which OSI layer is responsible for routing packets between networks?', null, 'Network layer', 'Transport layer', 'Data link layer', 'Session layer', 'Routers work at the network layer (layer 3).', 'Networking'],
   ['Which protocol is connection-oriented and guarantees delivery?', null, 'TCP', 'UDP', 'IP', 'ICMP', 'TCP uses acknowledgements and retransmission.', 'Networking'],

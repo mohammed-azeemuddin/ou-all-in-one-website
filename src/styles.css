@@ -571,8 +571,8 @@ table.pattern tr.total td { font-weight: 800; }
 .q-card.is-right { border-left: 4px solid var(--accent); }
 .q-card.is-wrong { border-left: 4px solid #d93b3b; }
 .mock-card.is-taken .mock-num { background: linear-gradient(135deg, var(--hat), #8b7bff); }
-.company-logo { flex: none; border-radius: 14px; background: #fff; display: grid; place-items: center; padding: 6px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-.company-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.company-logo { flex: none; overflow: hidden; border-radius: 14px; background: #fff; display: grid; place-items: center; padding: 6px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.company-logo img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .hero-logo { margin-top: 18px; }
 
 /* theme switch */
@@ -749,3 +749,99 @@ table.pattern tr.total td { font-weight: 800; }
 /* "All placement prep": a clear outlined button in the brand colour (was a faint text link on phones). */
 .hx-ctas .btn-ghost { color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 2px var(--primary); }
 .hx-ctas .btn-ghost:hover { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); }
+
+/* Coding practice (/placements/coding, problem pages, company pages) */
+.soon-note { margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); font-size: 0.92rem; }
+.soon-note b { color: var(--accent); }
+.coding-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hero-meta { margin-top: 10px; font-weight: 700; }
+.pill-hard { background: color-mix(in srgb, #e5484d 14%, var(--surface)); color: #d13438; }
+.asked-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.asked-badge { font-size: 0.74rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent); }
+a.asked-badge:hover { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); }
+.coding-row > div { gap: 6px; }
+.coding-hub { margin-top: 16px; }
+.coding-hub .mock-num { font-size: 0.9rem; }
+.coding-filters { display: grid; gap: 2px; margin: 8px 0 12px; }
+.coding-filters .chips { padding-top: 4px; padding-bottom: 8px; }
+.coding-page > * { max-width: 760px; }
+.coding-page h3 { margin: 18px 0 6px; font-size: 1rem; }
+.coding-statement { font-size: 1.05rem; line-height: 1.6; }
+.coding-asked { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.sample-io { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sample-io .code { margin: 4px 0 0; white-space: pre-wrap; }
+@media (max-width: 560px) { .sample-io { grid-template-columns: 1fr; } }
+
+/* Interviews (/placements/interviews, company experiences, subject questions) */
+.rounds { list-style: none; counter-reset: r; display: grid; gap: 10px; padding: 0; margin: 8px 0 0; }
+.rounds li { counter-increment: r; position: relative; display: grid; gap: 4px; padding: 12px 14px 12px 52px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
+.rounds li::before { content: counter(r); position: absolute; left: 14px; top: 12px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.85rem; color: #fff; background: var(--primary); }
+.chip.static { cursor: default; }
+.chip.static:hover { transform: none; }
+.reported { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.reported-q { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.answer-link { flex: none; font-weight: 800; font-size: 0.85rem; color: var(--primary); white-space: nowrap; }
+.report p { margin: 6px 0 0; }
+.sources { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.9rem; }
+.sources a { color: var(--primary); }
+.qa { border-radius: 14px; background: var(--surface); border: 1px solid var(--border); scroll-margin-top: 80px; }
+.qa.open { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+.qa-q { width: 100%; display: flex; align-items: flex-start; gap: 12px; padding: 14px; text-align: left; background: none; border: 0; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.qa-n { flex: none; min-width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 0.8rem; background: var(--primary-soft); color: var(--primary); }
+.qa-plus { flex: none; font-size: 1.3rem; line-height: 1; color: var(--muted); }
+.qa-asked { padding: 0 14px 10px 52px; }
+.qa-a { margin: 0; padding: 0 16px 16px 52px; line-height: 1.6; color: var(--text); }
+@media (max-width: 560px) { .qa-asked, .qa-a { padding-left: 16px; } }
+
+/* Company page: mock tests first, in a grid (they used to sit at the very bottom on phones) */
+.company-mocks { padding-top: 8px; }
+.mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
+@media (max-width: 560px) {
+  .mock-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mock-grid .mock-card { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+  .mock-grid .mock-card .row-go { display: none; }
+  .mock-grid .mock-card b { font-size: 0.95rem; line-height: 1.25; }
+  .mock-grid .mock-card .mock-num { width: 34px; height: 34px; font-size: 0.95rem; }
+}
+
+/* Company page: "Previously asked" tiles (same block for every company) and on-page jump links */
+.asked-strip { padding-top: 4px; }
+.asked-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.asked-tile { display: grid; gap: 4px; align-content: start; padding: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); color: inherit; transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease); }
+a.asked-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.asked-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 0.9rem; color: #fff; background: linear-gradient(135deg, var(--primary), var(--accent)); margin-bottom: 4px; }
+.asked-tile b { font-size: 1.05rem; }
+.asked-go { margin-top: 6px; font-weight: 800; font-size: 0.88rem; color: var(--primary); }
+.asked-tile.is-empty { box-shadow: none; background: transparent; border-style: dashed; }
+.asked-tile.is-empty .asked-ico { background: var(--bg); color: var(--muted); }
+.jump { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.jump .chip { font-size: 0.82rem; padding: 6px 12px; }
+.prep-two h2[id] { scroll-margin-top: 84px; }
+@media (max-width: 760px) { .asked-tiles { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .asked-tile { grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; padding: 14px; }
+  .asked-tile > * { grid-column: 2; }
+  .asked-tile .asked-ico { grid-column: 1; grid-row: 1 / span 3; margin: 0; }
+}
+
+/* Company page: tighter rhythm between mocks, previously asked and progress */
+.section.tight.company-mocks { padding: 28px 0 8px; }
+.section.tight.asked-strip { padding: 20px 0 8px; }
+.company-mocks .section-title, .asked-strip .section-title { margin-bottom: 6px; }
+.company-mocks .muted.small, .asked-strip > .wrap > .muted.small { margin: 0 0 4px; }
+.asked-strip + .progress-strip { padding-top: 12px; }
+.progress-strip + .section.tight { padding-top: 24px; }
+.jump { margin-top: 12px; }
+
+/* "Previously asked in <company>" flag on practice questions */
+.asked-flag { display: inline-block; max-width: 100%; margin-bottom: 8px; padding: 3px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 800; background: color-mix(in srgb, #f5b301 18%, var(--surface)); color: color-mix(in srgb, #b07d00 80%, var(--text)); border: 1px solid color-mix(in srgb, #f5b301 45%, transparent); }
+.asked-flag .muted { font-weight: 600; }
+
+/* Explanations: answer, how to solve, numbered steps, shortcut */
+.explain p { margin: 0; }
+.explain > * + * { margin-top: 8px; }
+.explain-head { font-size: 0.95rem; }
+.explain-method { line-height: 1.55; }
+.explain-steps { margin: 6px 0 0; padding-left: 22px; display: grid; gap: 4px; line-height: 1.55; }
+.explain-shortcut { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, #f5b301 14%, var(--surface)); border: 1px solid color-mix(in srgb, #f5b301 40%, transparent); line-height: 1.5; }
+.explain-others ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 3px; line-height: 1.5; color: var(--muted); }
