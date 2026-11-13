@@ -10,7 +10,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { collectionDocs, readStats } from './lib/firestore.mjs';
+import { collectionDocs, contentVersion, decodeDoc, readStats } from './lib/firestore.mjs';
 import { neutralLabels, unitSortKey } from '../src/lib/fileLabel.ts';
 import { parseName, sessionSortKey } from '../src/lib/subjects.ts';
 
@@ -137,6 +137,21 @@ const totalPapers = COURSES.reduce((a, c) => a + data[`papers:${c.id}`].reduce((
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'home.json'), home);
     writeFileSync(join(dir, 'search.json'), search);
+  }
+}
+// Full papers / notes / lab lists as static files, so opening a course on the website costs no
+// Firestore reads. Each file records contentVersion; when it is raised after new uploads, the browser
+// sees a newer live version and reads Firestore directly until the next deploy rebuilds these files.
+{
+  const v = await contentVersion();
+  const names = [...COURSES.flatMap((c) => [`${c.id}_qp`, `${c.id}_notes`]), 'lab_manuals'];
+  for (const name of names) {
+    const docs = await collectionDocs(name);
+    const body = JSON.stringify({ v, items: docs.map(decodeDoc) });
+    for (const dir of [join(DIST, 'data', 'col'), join('public', 'data', 'col')]) {
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, `${name}.json`), body);
+    }
   }
 }
 

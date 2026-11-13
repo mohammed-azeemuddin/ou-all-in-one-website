@@ -712,11 +712,9 @@ table.pattern tr.total td { font-weight: 800; }
 @media (max-width: 640px) {
   /* Store buttons already sit in the "Also on your phone" card below (and "Get the app" in the menu). */
   .hx-stores { display: none; }
-  /* Logos: one swipeable row instead of two rows of ten. */
-  .hx-logos { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; margin: 0 -16px; padding: 2px 16px 4px; scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
-  .hx-logos::-webkit-scrollbar { display: none; }
-  .hx-logo { flex: 0 0 86px; scroll-snap-align: start; }
+  /* Logos: all ten visible as a tidy 5 x 2 grid. */
+  .hx-logos { gap: 6px; }
+  .hx-logo { height: 36px; padding: 5px 6px; }
   /* Sections and courses: a tidy 2 x 2 grid instead of wrapping pills. */
   .hx-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .hx-chip { border-radius: 14px; padding: 10px 12px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -724,21 +722,30 @@ table.pattern tr.total td { font-weight: 800; }
   /* One main button; the second becomes a quiet link. */
   .hx-ctas { flex-direction: column; align-items: stretch; gap: 4px; }
   .hx-ctas .btn:not(.btn-ghost) { width: 100%; padding: 14px 22px; }
-  .hx-ctas .btn-ghost { box-shadow: none; padding: 10px; }
+  .hx-ctas .btn-ghost { width: 100%; padding: 13px 22px; }
   .hx-panel-lead { font-size: 0.95rem; }
   .hx-art { height: 220px; margin-top: 18px; }
 }
-/* Logos: grid on larger screens (track is transparent to layout, copy hidden); auto-scrolling strip on phones. */
+/* Logos: a static 5 x 2 grid everywhere (the duplicate copy used by the old marquee stays hidden). */
 .hx-logos-track { display: contents; }
 .hx-dup { display: none; }
+
+/* ---------- hero: slim Play / App Store / Telegram badges (both tabs, phone and desktop) ---------- */
+.hx-stores { margin-top: 20px; }
+.hx-badges { display: flex; gap: 8px; max-width: 420px; }
+.hx-badge { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; border-radius: 10px; font-size: 0.86rem; font-weight: 700; white-space: nowrap;
+  background: #111; color: #fff; border: 1px solid rgba(255, 255, 255, 0.18); transition: transform 0.2s var(--ease), box-shadow 0.2s; }
+.hx-badge:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.hx-badge svg { width: 15px; height: 15px; flex: none; }
+.hx-badge.tg { background: #1f8fd0; border-color: #1f8fd0; }
 @media (max-width: 640px) {
-  .hx-logos { display: block; overflow: hidden; scroll-snap-type: none; padding: 2px 0 4px; margin: 0 -16px;
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
-  .hx-logos-track { display: flex; gap: 8px; width: max-content; animation: hxMarquee 28s linear infinite; }
-  .hx-logos:hover .hx-logos-track, .hx-logos:active .hx-logos-track, .hx-logos:focus-within .hx-logos-track { animation-play-state: paused; }
-  .hx-dup { display: grid; }
-  .hx-logo { flex: 0 0 86px; }
+  .hx-stores { display: block; margin-top: 14px; }
+  .hx-badges { max-width: none; }
+  .hx-badge { padding: 7px 6px; font-size: 0.8rem; }
 }
-/* One copy = half the track plus half a gap (20 logos, 19 gaps of 8px), so -50% - 4px loops seamlessly. */
-@keyframes hxMarquee { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 4px)); } }
-@media (prefers-reduced-motion: reduce) { .hx-logos-track { animation: none !important; } .hx-logos { overflow-x: auto; } }
+.app-band.only-buttons { justify-content: center; padding: 20px; }
+.app-band.only-buttons .store-row { justify-content: center; }
+
+/* "All placement prep": a clear outlined button in the brand colour (was a faint text link on phones). */
+.hx-ctas .btn-ghost { color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 2px var(--primary); }
+.hx-ctas .btn-ghost:hover { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); }

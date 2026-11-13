@@ -37,8 +37,26 @@ export function getMeta() {
 const memory = new Map();
 const JUNK = /^https?:\/\/(?:www\.)?(?:cknscajk\.com|sdaggasdadyewfb\.com)\b/i;
 
+async function fromFirestore(name) {
+  const items = [];
+  let token = '';
+  do {
+    const page = await get(`${encodeURIComponent(name)}?pageSize=1000${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`);
+    for (const d of page?.documents ?? []) items.push({ id: d.name.split('/').pop(), ...fields(d.fields) });
+    token = page?.nextPageToken ?? '';
+  } while (token);
+  return items;
+}
+
 /** All docs of a collection as plain objects with `id`. Items without a name or link are dropped. */
-export async function loadCollection(name, { raw = false } = {}) {
+const pending = new Map();
+/** All docs of a collection; parallel calls for the same collection share one request. */
+export function loadCollection(name, opts = {}) {
+  const k = `${name}:${opts.raw ? 1 : 0}`;
+  if (!pending.has(k)) pending.set(k, loadCollectionOnce(name, opts).finally(() => pending.delete(k)));
+  return pending.get(k);
+}
+async function loadCollectionOnce(name, { raw = false } = {}) {
   const meta = await getMeta();
   const version = meta.contentVersion ?? 0;
   const key = `col:${name}:${version}`;
@@ -51,13 +69,17 @@ export async function loadCollection(name, { raw = false } = {}) {
       return items;
     }
   } catch {}
-  const items = [];
-  let token = '';
-  do {
-    const page = await get(`${encodeURIComponent(name)}?pageSize=1000${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`);
-    for (const d of page?.documents ?? []) items.push({ id: d.name.split('/').pop(), ...fields(d.fields) });
-    token = page?.nextPageToken ?? '';
-  } while (token);
+  // Built copy first (written at deploy, costs no Firestore reads). It is used when it is at least as new
+  // as the live contentVersion; after new uploads bump the version, read Firestore until the next deploy.
+  let items = null;
+  try {
+    const res = await fetch(`/data/col/${encodeURIComponent(name)}.json`);
+    if (res.ok) {
+      const built = await res.json();
+      if (built && Array.isArray(built.items) && (built.v ?? 0) >= version) items = built.items;
+    }
+  } catch {}
+  if (!items) items = await fromFirestore(name);
   const clean = raw
     ? items
     : items

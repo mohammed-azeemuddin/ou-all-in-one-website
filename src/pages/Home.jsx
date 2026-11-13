@@ -140,7 +140,6 @@ function PlacementsPanel({ idx }) {
     <div className="hx-panel" role="tabpanel" id="hx-placements" aria-labelledby="hx-tab-placements">
       <p className="hx-panel-lead">Company-wise prep and {mocks || 'over 100'} timed mock tests, free.</p>
       <div className="hx-logos">
-        {/* On phones the logos scroll right to left on their own; the second copy makes the loop seamless. */}
         <div className="hx-logos-track">
           {[0, 1].map((copy) =>
             companies.map((c) => (
@@ -215,7 +214,7 @@ export default function Home() {
               </div>
             ) : null}
             <div className="hx-stores fade-up" style={{ '--delay': '260ms' }}>
-              <StoreButtons />
+              <HeroBadges />
             </div>
           </div>
           <div className="hx-art" aria-hidden="true">
@@ -247,17 +246,45 @@ export default function Home() {
 
       <section className="section">
         <div className="wrap">
-          <Reveal className="app-band">
-            <div>
-              <h2>Also on your phone</h2>
-              <p className="muted">Bookmarks, offline papers, quizzes and calculators in the app. New papers are posted on Telegram first.</p>
-            </div>
+          <Reveal className="app-band only-buttons">
             <StoreButtons />
           </Reveal>
         </div>
       </section>
       </div>
     </>
+  );
+}
+
+/** Slim Play / App Store / Telegram badges for the hero: same row under both tabs, kept small so the hero stays light. */
+function HeroBadges() {
+  const items = [
+    {
+      href: PLAY_URL,
+      label: 'Google Play',
+      aria: 'Get the Android app on Google Play',
+      cls: '',
+      icon: (
+        <>
+          <path fill="#34A853" d="M3.6 2.2 13.4 12l-9.8 9.8c-.4-.2-.6-.6-.6-1.1V3.3c0-.5.2-.9.6-1.1z" />
+          <path fill="#FBBC04" d="m16.7 15.3-3.3-3.3 3.3-3.3 3.8 2.2c1 .6 1 1.6 0 2.2l-3.8 2.2z" />
+          <path fill="#EA4335" d="M16.7 15.3 13.4 12l-9.8 9.8c.4.2.9.2 1.4-.1l11.7-6.4z" />
+          <path fill="#4285F4" d="M16.7 8.7 5 2.3c-.5-.3-1-.3-1.4-.1l9.8 9.8 3.3-3.3z" />
+        </>
+      ),
+    },
+    APP_STORE_URL ? { href: APP_STORE_URL, label: 'App Store', aria: 'Download the iPhone app on the App Store', cls: '', icon: <path fill="currentColor" d="M16.4 12.6c0-2.4 2-3.6 2.1-3.6-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.4-.9-2.4-4zM14 5.4c.7-.8 1.1-1.9 1-3-1 0-2.1.6-2.8 1.4-.6.7-1.2 1.8-1 2.9 1 .1 2.1-.5 2.8-1.3z" /> } : null,
+    { href: TELEGRAM_URL, label: 'Telegram', aria: 'Join the Telegram channel', cls: 'tg', icon: <path fill="currentColor" d="m3.6 11.4 15.5-6c.7-.3 1.4.2 1.1 1.3l-2.6 12.4c-.2.9-.7 1.1-1.4.7l-4-3-2 1.9c-.2.2-.4.4-.8.4l.3-4.1 7.5-6.8c.3-.3-.1-.5-.5-.2l-9.3 5.9-4-1.3c-.9-.3-.9-.9.2-1.2z" /> },
+  ].filter(Boolean);
+  return (
+    <div className="hx-badges" aria-label="Get the app or join Telegram">
+      {items.map((b) => (
+        <a key={b.label} className={`hx-badge ${b.cls}`} href={b.href} target="_blank" rel="noreferrer" aria-label={b.aria}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">{b.icon}</svg>
+          {b.label}
+        </a>
+      ))}
+    </div>
   );
 }
 

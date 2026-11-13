@@ -75,3 +75,30 @@ export async function collectionDocs(name) {
     throw new Error(`${err.message}. No saved copy to fall back on, so the build stops here rather than publishing empty pages.`);
   }
 }
+
+/** Firestore REST value → plain JS (same rules as src/lib/firestore.js in the browser). */
+export function decodeValue(v) {
+  if (!v) return null;
+  if ('stringValue' in v) return v.stringValue;
+  if ('integerValue' in v) return Number(v.integerValue);
+  if ('doubleValue' in v) return v.doubleValue;
+  if ('booleanValue' in v) return v.booleanValue;
+  if ('timestampValue' in v) return Date.parse(v.timestampValue);
+  if ('arrayValue' in v) return (v.arrayValue.values ?? []).map(decodeValue);
+  if ('mapValue' in v) return decodeFields(v.mapValue.fields);
+  return null;
+}
+export const decodeFields = (f = {}) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, decodeValue(v)]));
+export const decodeDoc = (d) => ({ id: d.name.split('/').pop(), ...decodeFields(d.fields) });
+
+/** app_config/meta.contentVersion (1 read), or null if it can't be read. */
+export async function contentVersion() {
+  try {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/app_config/meta?key=${KEY}`);
+    if (!res.ok) return null;
+    const d = await res.json();
+    return decodeFields(d.fields).contentVersion ?? null;
+  } catch {
+    return null;
+  }
+}
