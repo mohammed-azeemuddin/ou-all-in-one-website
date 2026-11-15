@@ -5,6 +5,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Public IDs; each Google tag is added only when its ID is filled in (see vite.config.js).
+  GA_ID = "G-F24SEKZQR3"  # Google Analytics 4: property "ouallinone.com", stream "ouallinone.com website"
+  ADSENSE_CLIENT = "ca-pub-2990131125160004"  # AdSense publisher ID (ouallinone@gmail.com account)
 
 [[headers]]
   for = "/assets/*"

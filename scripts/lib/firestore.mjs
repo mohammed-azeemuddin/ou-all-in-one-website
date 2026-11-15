@@ -13,6 +13,9 @@ import { join } from 'node:path';
 
 const PROJECT = 'ou-all-in-one-83b53';
 const KEY = 'AIzaSyAGs_fbwAPvlvTstHiFsZVffkA1SNcJpCI'; // public web key, same as the site
+// The key is restricted to ouallinone.com in Google Cloud. Firestore reads of public data don't
+// check the key today, but send the site as referer so builds keep working if that changes.
+const HEADERS = { Referer: 'https://www.ouallinone.com/' };
 const CACHE_DIR = '.cache/firestore';
 const CACHE_HOURS = 12;
 const ON_CI = !!(process.env.NETLIFY || process.env.CI);
@@ -40,7 +43,7 @@ async function fetchAll(name) {
   let token = '';
   do {
     const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/${encodeURIComponent(name)}?pageSize=1000&key=${KEY}${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: HEADERS });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || body.error) throw new Error(`Firestore ${name}: ${res.status} ${(body.error?.message ?? res.statusText).replace(/\.$/, "")}`);
     docs.push(...(body.documents ?? []));
@@ -94,7 +97,7 @@ export const decodeDoc = (d) => ({ id: d.name.split('/').pop(), ...decodeFields(
 /** app_config/meta.contentVersion (1 read), or null if it can't be read. */
 export async function contentVersion() {
   try {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/app_config/meta?key=${KEY}`);
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/app_config/meta?key=${KEY}`, { headers: HEADERS });
     if (!res.ok) return null;
     const d = await res.json();
     return decodeFields(d.fields).contentVersion ?? null;
