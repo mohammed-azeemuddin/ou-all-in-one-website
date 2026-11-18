@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { PageHero, useTitle } from '../components/ui';
-import { adminEmail, deleteItem, listItems, readMeta, saveItem, saveMeta, signIn, signOut } from '../lib/admin';
+import { adminEmail, deleteItem, listItems, onRebuildStatus, readMeta, rebuildNow, rebuildStatus, saveItem, saveMeta, signIn, signOut } from '../lib/admin';
 import { COURSES } from '../lib/courses';
 import { parseName } from '../lib/subjects';
 
@@ -26,7 +26,7 @@ const KINDS = [
 ];
 const collectionOf = (kind, course) => (kind === 'papers' ? `${course}_qp` : kind === 'notes' ? `${course}_notes` : kind === 'labs' ? 'lab_manuals' : kind === 'updates' ? 'whats_new' : 'jobs');
 // The Existing items list can also show What's New posts.
-const MANAGE_KINDS = [...KINDS, ['updates', 'What’s New post']];
+const MANAGE_KINDS = [['papers', 'Question papers'], ['notes', 'Notes'], ['labs', 'Lab manuals'], ['jobs', 'Jobs and internships'], ['updates', 'What’s New posts']];
 /** Drive file link -> Drive's image thumbnail (the same conversion the app does), so the preview shows the picture. */
 const imagePreview = (u) => { const id = u.match(DRIVE_FILE)?.[1]; return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200` : u; };
 
@@ -184,7 +184,7 @@ function Manage() {
     <div className="panel admin-form">
       <h2>Existing items</h2>
       <div className="chips">
-        {MANAGE_KINDS.map(([k, label]) => <button key={k} type="button" className={`chip ${kind === k ? 'on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>{label}s</button>)}
+        {MANAGE_KINDS.map(([k, label]) => <button key={k} type="button" className={`chip ${kind === k ? 'on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>{label}</button>)}
       </div>
       {kind === 'papers' || kind === 'notes' ? (
         <label>Course
@@ -304,6 +304,28 @@ function AddUpdate() {
   );
 }
 
+/** Where the website rebuild stands after a change (the app needs no rebuild: it reads the database). */
+function RebuildBar() {
+  const [st, setSt] = useState(rebuildStatus());
+  const [, tick] = useState(0);
+  useEffect(() => onRebuildStatus(setSt), []);
+  useEffect(() => {
+    if (st.status !== 'waiting') return undefined;
+    const t = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [st.status]);
+  if (st.status === 'idle') return null;
+  const secs = st.status === 'waiting' ? Math.max(0, Math.ceil((st.at - Date.now()) / 1000)) : 0;
+  return (
+    <div className={`admin-msg rebuild-bar ${st.status === 'failed' ? 'is-bad' : 'is-good'}`} role="status">
+      {st.status === 'waiting' ? <>Website update starts in {secs}s (waiting for more changes). <button type="button" className="link-btn" onClick={() => void rebuildNow()}>Start now</button></> : null}
+      {st.status === 'sending' ? 'Starting the website update…' : null}
+      {st.status === 'started' ? 'Website update started. Pages Google reads catch up in about 2 minutes. The app already has your changes.' : null}
+      {st.status === 'failed' ? <>Website update didn’t start: {st.error} <button type="button" className="link-btn" onClick={() => void rebuildNow()}>Try again</button></> : null}
+    </div>
+  );
+}
+
 export default function Admin() {
   useTitle('Admin', { noindex: true });
   const [email, setEmail] = useState(adminEmail());
@@ -315,6 +337,7 @@ export default function Admin() {
           {!email ? <SignIn onDone={() => setEmail(adminEmail())} /> : (
             <>
               <p className="muted">Signed in as {email}. <button type="button" className="link-btn" onClick={() => { signOut(); setEmail(null); }}>Sign out</button></p>
+              <RebuildBar />
               <AddItem />
               <AddUpdate />
               <Notice />

@@ -116,17 +116,67 @@ export const bumpVersion = () =>
     body: { writes: [{ transform: { document: `${DOCS}/app_config/meta`, fieldTransforms: [{ fieldPath: 'contentVersion', increment: { integerValue: '1' } }] } }] },
   });
 
+// ---------- website rebuild ----------
+// The website's built copies of the lists only update on a deploy. After a change, a rebuild is asked
+// for once the admin has been idle for REBUILD_DELAY (so ten uploads in a row cost one build), or at
+// once if the page is hidden or closed before then. The request goes to /api/rebuild
+// (netlify/functions/rebuild.mjs), which checks the admin sign-in and keeps the build hook secret.
+const REBUILD_DELAY = 30_000;
+let rebuildTimer = null;
+let rebuildState = { status: 'idle' }; // idle | waiting (at) | sending | started (at) | failed (error)
+const listeners = new Set();
+const setRebuild = (st) => {
+  rebuildState = st;
+  listeners.forEach((l) => l(st));
+};
+export const rebuildStatus = () => rebuildState;
+export function onRebuildStatus(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+export async function rebuildNow() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = null;
+  setRebuild({ status: 'sending' });
+  try {
+    const res = await fetch('/api/rebuild', { method: 'POST', headers: { Authorization: `Bearer ${await token()}` }, keepalive: true });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error ?? `Rebuild request failed (${res.status}).`);
+    setRebuild({ status: 'started', at: Date.now() });
+  } catch (err) {
+    setRebuild({ status: 'failed', error: err.message });
+  }
+}
+
+function scheduleRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(rebuildNow, REBUILD_DELAY);
+  setRebuild({ status: 'waiting', at: Date.now() + REBUILD_DELAY });
+}
+
+if (typeof document !== 'undefined') {
+  // Leaving the page with a rebuild still waiting: send it now (keepalive lets it finish).
+  const flush = () => {
+    if (rebuildTimer && document.visibilityState === 'hidden') void rebuildNow();
+  };
+  document.addEventListener('visibilitychange', flush);
+  window.addEventListener('pagehide', () => rebuildTimer && void rebuildNow());
+}
+
 /** Adds a document (or replaces the one with the same id) and bumps the content version. */
 export async function saveItem(collection, id, data) {
   const fields = encodeFields(data);
   if (id) await call(`${BASE}/${encodeURIComponent(collection)}/${encodeURIComponent(id)}`, { method: 'PATCH', body: { fields } });
   else await call(`${BASE}/${encodeURIComponent(collection)}`, { method: 'POST', body: { fields } });
   await bumpVersion();
+  scheduleRebuild();
 }
 
 export async function deleteItem(collection, id) {
   await call(`${BASE}/${encodeURIComponent(collection)}/${encodeURIComponent(id)}`, { method: 'DELETE' });
   await bumpVersion();
+  scheduleRebuild();
 }
 
 /** The live list straight from Firestore (one read per document), newest change first. */
