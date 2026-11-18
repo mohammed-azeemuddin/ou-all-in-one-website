@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 
 import { Footer, Header } from './components/ui';
 import Home from './pages/Home';
 import { Contact, CourseList, Folder, Labs, NotFound, SearchPage, Section, SubjectPage, Tools, Viewer } from './pages/Pages';
 import { PrepCoding, PrepCodingProblem, PrepCompanies, PrepInterviewCompany, PrepInterviews, PrepInterviewSubject, PrepCompany, PrepGroup, PrepHub, PrepMock, PrepTopic } from './pages/Prep';
+
+// The admin page is loaded only when /admin is opened, so visitors never download it.
+const Admin = lazy(() => import('./pages/Admin'));
 
 export default function App() {
   const { pathname } = useLocation();
@@ -39,6 +42,7 @@ export default function App() {
           <Route path="/placements/:group/:topic" element={<PrepTopic />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
           <Route path="/view/:id" element={<Viewer />} />
           <Route path="/folder/:id" element={<Folder />} />
           <Route path="*" element={<NotFound />} />

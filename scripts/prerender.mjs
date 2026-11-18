@@ -11,6 +11,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { collectionDocs, contentVersion, decodeDoc, readStats } from './lib/firestore.mjs';
+import { FAQ } from '../src/lib/faq.js';
 import { neutralLabels, unitSortKey } from '../src/lib/fileLabel.ts';
 import { parseName, sessionSortKey } from '../src/lib/subjects.ts';
 
@@ -30,6 +31,15 @@ const DRIVE_FOLDER = /drive\.google\.com\/drive\/(?:mobile\/)?(?:u\/\d+\/)?folde
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const slugify = (t) => t.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'subject';
 const today = new Date().toISOString().slice(0, 10);
+const YEAR = today.slice(0, 4);
+const TELEGRAM = 'https://t.me/ouallinone';
+/** "2019 to 2024" (or one year) from exam sessions such as "Dec 2023", for titles students search with a year. */
+const yearSpan = (sessions) => {
+  const ys = sessions.flatMap((x) => x.match(/\b(?:19|20)\d{2}\b/g) ?? []).map(Number);
+  if (!ys.length) return '';
+  const [a, b] = [Math.min(...ys), Math.max(...ys)];
+  return a === b ? `${a}` : `${a} to ${b}`;
+};
 
 async function collection(name) {
   const out = [];
@@ -73,7 +83,7 @@ const urls = [];
 
 const NAV = `<header class="site-header"><div class="wrap header-row"><a href="/" class="brand">OU All In One</a>
 <nav class="nav" aria-label="Main"><a class="nav-link" href="/papers">Papers</a><a class="nav-link" href="/notes">Notes</a><a class="nav-link" href="/labs">Labs</a><a class="nav-link" href="/placements">Placements</a><a class="nav-link" href="/tools">Tools</a></nav></div></header>`;
-const FOOT = `<footer class="site-footer"><div class="wrap"><p>OU All In One: free papers, notes, lab manuals and placement prep for Osmania University students. <a href="/contact">Contact</a> · <a href="/privacy.html">Privacy policy</a></p>
+const FOOT = `<footer class="site-footer"><div class="wrap"><p>OU All In One: free papers, notes, lab manuals and placement prep for Osmania University students. <a href="/contact">Contact</a> · <a href="/privacy.html">Privacy policy</a> · <a href="${TELEGRAM}">Job updates on Telegram</a></p>
 <p class="footer-note">OU All In One is an independent student project and is not affiliated with, endorsed by or connected to Osmania University.</p></div></footer>`;
 
 function crumbs(list) {
@@ -83,18 +93,28 @@ function crumbs(list) {
   };
 }
 
-function write(path, { title, description, h1, intro, body, jsonld = [], priority = 0.6 }) {
+function write(path, { title, description, h1, intro, body, jsonld = [], priority = 0.6, faq }) {
   const url = SITE + (path === '/' ? '/' : path);
+  if (faq?.length) {
+    // The same questions are shown by the site's <Faq> component, so the structured data matches the page.
+    body += `<h2>Frequently asked questions</h2><dl>${faq.map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('')}</dl>`;
+    jsonld = [...jsonld, { '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
+  }
   const head = [
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
     `<link rel="canonical" href="${url}" />`,
+    `<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />`,
     `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="OU All In One" />`,
+    `<meta property="og:locale" content="en_IN" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:title" content="${esc(title)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
     `<meta property="og:image" content="${SITE}/logo512.png" />`,
     `<meta name="twitter:card" content="summary" />`,
+    `<meta name="twitter:title" content="${esc(title)}" />`,
+    `<meta name="twitter:description" content="${esc(description)}" />`,
     ...jsonld.map((j) => `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', ...j }).replace(/</g, '\\u003c')}</script>`),
   ].join('\n    ');
   const html = template
@@ -159,14 +179,14 @@ const totalPapers = COURSES.reduce((a, c) => a + data[`papers:${c.id}`].reduce((
 
 // ---------- pages ----------
 write('/', {
-  title: 'OU Previous Question Papers and Notes (Osmania University) | OU All In One',
-  description: `Free Osmania University (OU) previous question papers and notes: ${totalPapers}+ papers for B.E. Engineering, B.Pharmacy, BBA, Law and more. Search by subject or code. No sign-up.`,
+  title: 'OU Previous Question Papers, Notes, Lab Manuals and Placement Prep | OU All In One',
+  description: `Free Osmania University (OU) previous year question papers and notes as PDF: ${totalPapers}+ papers for B.E. Engineering, B.Pharmacy, BBA and Law. Plus lab manuals and free placement preparation with mock tests. No sign-up.`,
   h1: 'OU previous question papers and notes, free',
   intro: 'Osmania University papers and notes for Engineering, Pharmacy, BBA, Law and more, plus free placement prep: company-wise questions and timed mock tests for TCS, Infosys, Wipro, Accenture and others.',
   priority: 1,
   body: `<h2>Question papers by course</h2>${list(COURSES.map((c) => [`/papers/${c.id}`, `OU ${c.title} previous question papers`, `${data[`papers:${c.id}`].reduce((x, g) => x + g.items.length, 0)} papers`]))}
 <h2>Notes by course</h2>${list(COURSES.map((c) => [`/notes/${c.id}`, `OU ${c.title} notes`, `${data[`notes:${c.id}`].length} subjects`]))}
-<h2>Placement prep</h2>${list([['/placements', 'Placement preparation: aptitude, reasoning, verbal and technical MCQs with mock tests'], ['/placements/companies', 'Company-wise preparation (TCS NQT, Infosys, Wipro, Accenture and more)']])}
+<h2>Placement prep</h2>${list([['/placements', 'Free placement preparation course: aptitude, reasoning, verbal and technical MCQs with mock tests'], ['/placements/companies', 'Company-wise preparation and previous year questions (TCS NQT, Infosys, Wipro, Accenture and more)'], ['/placements/interviews', 'Interview experiences and interview questions with answers'], ['/placements/coding', 'Previous year coding questions asked by companies']])}
 <h2>More</h2>${list([['/labs', 'Lab manuals and viva questions'], ['/placements', 'Placements, interview questions and jobs'], ['/tools', 'SGPA and attendance calculators']])}`,
   jsonld: [
     { '@type': 'WebSite', name: 'OU All In One', url: SITE, potentialAction: { '@type': 'SearchAction', target: `${SITE}/search?q={search_term_string}`, 'query-input': 'required name=search_term_string' } },
@@ -177,9 +197,13 @@ write('/', {
 for (const section of ['papers', 'notes']) {
   const S = section === 'papers' ? { title: 'Previous Question Papers', what: 'previous question papers', noun: 'papers' } : { title: 'Notes', what: 'notes', noun: 'notes' };
   write(`/${section}`, {
-    title: `OU ${S.title}: Engineering, Pharmacy, BBA, Law | OU All In One`,
-    description: `Osmania University ${S.what} for every course. Pick Engineering, Pharmacy, BBA, Law or other streams and open any subject free.`,
-    h1: `Osmania University ${S.what}`,
+    title: section === 'papers' ? 'OU Previous Year Question Papers PDF: B.E., B.Pharmacy, BBA, Law | OU All In One' : 'OU Notes PDF: Engineering, Pharmacy, BBA, Law | OU All In One',
+    description: section === 'papers'
+      ? `Download Osmania University (OU) previous year question papers as PDF: ${totalPapers}+ papers, subject-wise, for B.E. Engineering, B.Pharmacy, BBA and Law. Free, no sign-up.`
+      : 'Osmania University (OU) notes as PDF, subject-wise, for Engineering, Pharmacy, BBA and Law. Read online or download free, no sign-up.',
+    h1: section === 'papers' ? 'OU previous question papers' : 'OU notes and references',
+    intro: section === 'papers' ? 'Osmania University previous year question papers as PDF. Pick your course to browse by subject and year.' : 'Osmania University notes as PDF, printed and handwritten. Pick your course.',
+    faq: FAQ[section],
     body: list(COURSES.map((c) => [`/${section}/${c.id}`, `${c.title} ${S.what}`, c.long])),
     priority: 0.9,
     jsonld: [crumbs([['Home', '/'], [S.title, `/${section}`]])],
@@ -188,9 +212,9 @@ for (const section of ['papers', 'notes']) {
     const groups = data[`${section}:${c.id}`];
     const count = groups.reduce((x, g) => x + g.items.length, 0);
     write(`/${section}/${c.id}`, {
-      title: `OU ${c.title} ${S.what.replace(/^\w/, (m) => m.toUpperCase())}${count ? ` (${count} ${S.noun})` : ''} | OU All In One`,
-      description: `Osmania University ${c.long} ${S.what}: ${groups.length} subjects${groups.length ? `, including ${groups.slice(0, 4).map((g) => g.title).join(', ')}` : ''}. Free, no sign-up.`,
-      h1: `${c.title} ${S.what}`,
+      title: `OU ${c.title} ${section === 'papers' ? 'Previous Year Question Papers PDF' : 'Notes PDF'}${count ? ` (${count} ${S.noun})` : ''} | OU All In One`,
+      description: `Osmania University (OU) ${c.long} ${section === 'papers' ? 'previous year question papers' : 'notes'}, subject-wise: ${groups.length} subjects${groups.length ? `, including ${groups.slice(0, 4).map((g) => g.title).join(', ')}` : ''}. Read online or download the PDF free, no sign-up.`,
+      h1: `OU ${c.id === 'other' ? 'other streams' : c.title} ${S.what}`,
       intro: `Osmania University ${c.long}. ${groups.length} subjects, A to Z.`,
       body: groups.length ? list(groups.map((g) => [`/${section}/${c.id}/${g.slug}`, g.title, `${g.items.length} ${g.items.length === 1 ? (section === 'papers' ? 'paper' : 'set') : section === 'papers' ? 'papers' : 'sets'}`])) : '<p>New material is added regularly.</p>',
       priority: 0.8,
@@ -222,11 +246,11 @@ for (const section of ['papers', 'notes']) {
       const related = groups.filter((x) => x.slug !== g.slug).slice(0, 400);
       const what = section === 'papers' ? 'previous question papers' : 'notes';
       write(path, {
-        title: `${g.title} ${what === 'notes' ? 'Notes' : 'Previous Question Papers'} OU ${c.title}${codes.length ? ` (${codes[0]})` : ''} | OU All In One`,
+        title: `${g.title} ${what === 'notes' ? 'Notes PDF' : `Previous Question Papers${yearSpan(sessions) ? ` ${yearSpan(sessions)}` : ''}`} | OU ${c.title}${codes.length ? ` (${codes[0]})` : ''}`,
         description:
           section === 'papers'
-            ? `Osmania University ${c.long} ${g.title} previous question papers${sessions.length ? `: ${sessions.slice(0, 5).join(', ')}` : ''}${codes.length ? `. Subject code ${codes.join(', ')}` : ''}. Open or download free.`
-            : `Osmania University ${c.long} ${g.title} notes, unit by unit. Open or download free, no sign-up.`,
+            ? `${g.title} previous year question papers, Osmania University (OU) ${c.long}${sessions.length ? `: ${sessions.slice(0, 5).join(', ')}` : ''}${codes.length ? `. Subject code ${codes.join(', ')}` : ''}. Read online or download the PDF free.`
+            : `${g.title} notes PDF for Osmania University (OU) ${c.long}, unit by unit. Read online or download free, no sign-up.`,
         h1: `${g.title} ${what}`,
         intro: `Osmania University ${c.long}${codes.length ? ` · subject code ${codes.join(', ')}` : ''}${sessions.length ? ` · ${sessions.length} ${sessions.length === 1 ? 'exam' : 'exams'}` : ''}.`,
         body: `${list(rows)}<h2>More ${c.title} subjects</h2>${list(related.map((x) => [`/${section}/${c.id}/${x.slug}`, x.title]))}`,
@@ -241,7 +265,7 @@ for (const section of ['papers', 'notes']) {
 }
 
 for (const [path, title, description, h1] of [
-  ['/labs', 'Lab Manuals and Viva Questions (OU) | OU All In One', 'Osmania University lab manuals, records and viva questions for internals and externals.', 'Lab manuals and viva questions'],
+  ['/labs', 'OU Lab Manuals and Viva Questions PDF | OU All In One', 'Osmania University (OU) lab manuals, lab records and viva questions for internals and externals. Free, no sign-up.', 'OU lab manuals and viva questions'],
   ['/tools', 'SGPA, CGPA and Attendance Calculator (OU) | OU All In One', 'Calculate your SGPA with OU CBCS grades, and how many classes you can skip at 75% attendance.', 'SGPA and attendance calculators'],
   ['/contact', 'Contact | OU All In One', 'Questions, ideas, a paper to share, or a removal request: email ouallinone@gmail.com.', 'Contact OU All In One'],
 ]) write(path, { title, description, h1, body: '', priority: 0.5 });
@@ -268,12 +292,13 @@ for (const [path, title, description, h1] of [
   };
   const mockList = (ms) => list(ms.map((m) => [`/placements/mock/${m.id}`, m.title, `${m.questions} questions · ${m.minutes} min`]));
   write('/placements', {
-    title: 'Placement Preparation: Aptitude, Reasoning, TCS, Infosys Mock Tests | OU All In One',
-    description: 'Free placement preparation for freshers: quantitative aptitude, logical reasoning, verbal ability, technical MCQs (C, C++, Java, Python, AI, Gen AI) and company-wise mock tests for TCS NQT, Infosys, Wipro, Accenture, Cognizant and more.',
-    h1: 'Placement preparation',
-    intro: 'Practice questions with answers, timed mock tests and company-wise preparation.',
+    title: `Free Placement Preparation Course ${YEAR}: Aptitude, Coding, Interviews, Mock Tests | OU All In One`,
+    description: 'Free placement preparation course for freshers: aptitude, reasoning, verbal and technical MCQs with answers, previous year company questions, interview experiences and mock tests for TCS NQT, Infosys, Wipro, Accenture, Cognizant and more.',
+    h1: 'Free placement preparation',
+    intro: 'A free placement preparation course for freshers: aptitude, reasoning, verbal and technical practice with worked answers, previous year company questions, interview experiences and timed mock tests for TCS, Infosys, Wipro, Accenture and more.',
     priority: 0.9,
-    body: `<h2>Company-wise preparation</h2>${list(idx.companies.map((c) => [`/placements/companies/${c.id}`, `${c.name} preparation and mock tests`, c.full]))}<h2>Practise by section</h2>${list(idx.sections.map((s) => [`/placements/${s.id}`, s.title, s.blurb]))}${idx.languages.length ? `<h2>Programming and AI</h2>${list(idx.languages.map((l) => [`/placements/${l.id}`, `${l.title} MCQs`, l.blurb]))}` : ''}`,
+    faq: FAQ.placements,
+    body: `<p><a href="${TELEGRAM}">Get job and internship updates on Telegram (t.me/ouallinone)</a></p>${idx.companies.some((c) => c.asked) ? `<h2>Previous year questions</h2>${list(idx.companies.filter((c) => c.asked).map((c) => [`/placements/asked/${c.id}`, `${c.name} previous year questions with solutions`, `${c.asked} questions`]))}` : ''}<h2>Coding and interviews</h2>${list([['/placements/coding', 'Previous year coding questions asked by companies', `${idx.coding.length} problems`], ...(idx.interviews ? [['/placements/interviews', 'Interview experiences and interview questions with answers', `${idx.interviews.companies.length} companies`]] : [])])}<h2>Company-wise preparation</h2>${list(idx.companies.map((c) => [`/placements/companies/${c.id}`, `${c.name} preparation and mock tests`, c.full]))}<h2>Practise by section</h2>${list(idx.sections.map((s) => [`/placements/${s.id}`, s.title, s.blurb]))}${idx.languages.length ? `<h2>Programming and AI</h2>${list(idx.languages.map((l) => [`/placements/${l.id}`, `${l.title} MCQs`, l.blurb]))}` : ''}`,
     jsonld: [crumbs([['Home', '/'], ['Placements', '/placements']])],
   });
   for (const g of groups) {
@@ -289,7 +314,7 @@ for (const [path, title, description, h1] of [
     for (const t of g.topics) {
       const data = P(`t/${g.id}/${t.id}.json`);
       write(`/placements/${g.id}/${t.id}`, {
-        title: `${data.title} Questions with Answers (Placement Aptitude) | OU All In One`,
+        title: `${data.title} Questions and Answers for Placements (${g.title}) | OU All In One`,
         description: `${data.questions.length} ${data.title} questions with answers and explanations for TCS, Infosys, Wipro and other placement tests. ${data.desc}`,
         h1: `${data.title} questions`,
         intro: data.desc,
@@ -300,8 +325,8 @@ for (const [path, title, description, h1] of [
     }
   }
   write('/placements/companies', {
-    title: 'Company-wise Placement Preparation: TCS, Infosys, Wipro, Accenture | OU All In One',
-    description: 'Test patterns, tips, coding practice and mock tests for TCS NQT, Infosys, InfyTQ, Wipro Elite NTH, Cognizant GenC, Accenture, Capgemini, HCLTech, Deloitte, Tech Mahindra and LTIMindtree.',
+    title: `Company-wise Placement Preparation ${YEAR}: TCS, Infosys, Wipro, Accenture | OU All In One`,
+    description: 'Test patterns, tips, previous year questions, coding practice and free mock tests for TCS NQT, Infosys, InfyTQ, Wipro Elite NTH, Cognizant GenC, Accenture, Capgemini, HCLTech, Deloitte, Tech Mahindra and LTIMindtree.',
     h1: 'Company-wise placement preparation',
     priority: 0.8,
     body: list(idx.companies.map((c) => [`/placements/companies/${c.id}`, `${c.name} preparation`, c.full])),
@@ -311,12 +336,12 @@ for (const [path, title, description, h1] of [
     const rows = c.pattern.map((p) => `<tr><td>${esc(p.title)}</td><td>${p.questions}</td><td>${p.minutes} min</td></tr>`).join('');
     const coding = list(c.coding.map((k) => idx.coding.find((p) => p.id === k)).filter(Boolean).map((p) => [`/placements/coding/${p.id}`, p.title, `${p.level} · ${p.topic}`]));
     write(`/placements/companies/${c.id}`, {
-      title: `${c.name} Test Pattern, Preparation and Mock Tests | OU All In One`,
-      description: `${c.full}: test pattern (${c.pattern.map((p) => p.title).join(', ')}), tips, coding practice and 3 free mock tests.`,
+      title: `${c.name} Preparation ${YEAR}: Test Pattern, ${c.asked || c.coding.length ? 'Previous Year Questions, ' : ''}Free Mock Tests`,
+      description: `${c.full}: test pattern (${c.pattern.map((p) => p.title).join(', ')}), tips, previously asked coding questions and 3 free mock tests.`,
       h1: `${c.name} preparation`,
       intro: c.about,
       priority: 0.8,
-      body: `${c.asked ? `<p><a href="/placements/asked/${c.id}">Previously asked ${esc(c.name)} questions (${c.asked})</a></p>` : ''}<h2>Test pattern</h2><table class="pattern"><thead><tr><th>Section</th><th>Questions</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table>${c.extra ? `<p>${esc(c.extra)}</p>` : ''}<h2>Tips</h2><ul>${c.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><h2>Mock tests</h2>${mockList(c.mocks)}<h2>Previously asked coding questions</h2>${coding}<p><a href="/placements/coding">All coding practice</a></p>`,
+      body: `${c.asked ? `<p><a href="/placements/asked/${c.id}">${esc(c.name)} previous year questions with solutions (${c.asked})</a></p>` : ''}<h2>Test pattern</h2><table class="pattern"><thead><tr><th>Section</th><th>Questions</th><th>Time</th></tr></thead><tbody>${rows}</tbody></table>${c.extra ? `<p>${esc(c.extra)}</p>` : ''}<h2>Tips</h2><ul>${c.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><h2>Mock tests</h2>${mockList(c.mocks)}<h2>Previously asked coding questions</h2>${coding}<p><a href="/placements/coding">All coding practice</a></p>`,
       jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Companies', '/placements/companies'], [c.name, `/placements/companies/${c.id}`]])],
     });
   }
@@ -324,9 +349,9 @@ for (const [path, title, description, h1] of [
   const cname = (id) => idx.companies.find((x) => x.id === id)?.name ?? id;
   const askedText = (asked) => asked.map((a) => `${cname(a.company)}${a.when ? ` (${a.when})` : ''}`).join(', ');
   write('/placements/coding', {
-    title: 'Company Coding Questions: TCS, Infosys, Wipro, Accenture Previously Asked | OU All In One',
+    title: 'Previous Year Coding Questions: TCS, Infosys, Wipro, Accenture (with Hints) | OU All In One',
     description: `${idx.coding.length} coding questions reported from TCS NQT, Infosys, Wipro, Accenture, Cognizant, Capgemini, HCLTech, Deloitte, Tech Mahindra and LTIMindtree coding rounds, with examples and hints.`,
-    h1: 'Coding practice',
+    h1: 'Previous year coding questions',
     intro: 'Coding problems candidates reported from company coding rounds (memory-based), written up with our own examples and hints. A live code editor with test cases is coming soon.',
     priority: 0.8,
     body: list(idx.coding.map((p) => [`/placements/coding/${p.id}`, p.title, `${p.level} · ${p.topic}${p.asked.length ? ` · ${askedText(p.asked)}` : ''}`])),
@@ -348,9 +373,10 @@ for (const [path, title, description, h1] of [
   // Interviews: hub, one page per company experience and one per subject (answers in the HTML, plus FAQ data).
   if (idx.interviews) {
     write('/placements/interviews', {
-      title: 'Interview Experiences and Questions: TCS, Infosys, Wipro, Accenture | OU All In One',
+      title: 'Interview Experiences and Interview Questions for Freshers: TCS, Infosys, Wipro, Accenture | OU All In One',
+      faq: FAQ.interviews,
       description: `What ${idx.interviews.companies.length} companies asked freshers in recent interviews, and ${idx.interviews.subjects.reduce((a, s) => a + s.count, 0)} interview questions with answers on HR, OOP, C, C++, Java, Python, DSA, DBMS, SQL, OS, networks and Gen AI.`,
-      h1: 'Interview preparation',
+      h1: 'Interview experiences and questions',
       intro: 'Company interview experiences (rounds, technical and HR questions candidates reported) and answered interview questions by subject.',
       priority: 0.8,
       body: `<h2>Company interview experiences</h2>${list(idx.interviews.companies.map((iv) => [`/placements/interviews/${iv.company}`, `${cname(iv.company)} interview experience`, `${iv.technical + iv.hr} reported questions`]))}<h2>Interview questions by subject</h2>${list(idx.interviews.subjects.map((s) => [`/placements/interview-questions/${s.id}`, `${s.title} interview questions`, `${s.count} questions`]))}`,
@@ -361,9 +387,9 @@ for (const [path, title, description, h1] of [
       const name = cname(company);
       const qList = (items) => `<ul>${items.map((t) => `<li>${esc(t.text)}${t.code ? ` <a href="/placements/coding/${t.code}">(coding problem)</a>` : t.qid ? ` <a href="/placements/interview-questions/${t.subject}#${t.qid.split('/')[1]}">(answer)</a>` : ''}</li>`).join('')}</ul>`;
       write(`/placements/interviews/${company}`, {
-        title: `${name} Interview Experience and Questions (Technical and HR) | OU All In One`,
+        title: `${name} Interview Experience: Interview Questions Asked to Freshers (Technical and HR)`,
         description: `${name} interview rounds and the technical and HR questions candidates reported in recent interviews, with answers and tips. ${iv.summary}`.slice(0, 300),
-        h1: `${name} interview experience`,
+        h1: `${name} interview experience and questions`,
         intro: iv.summary,
         priority: 0.8,
         body: `<h2>Selection process</h2><ol>${iv.rounds.map((r) => `<li><b>${esc(r.title)}</b>: ${esc(r.what)}</li>`).join('')}</ol><h2>Technical questions candidates reported</h2>${qList(iv.technical)}<h2>HR and managerial questions</h2>${qList(iv.hr)}<h2>Tips</h2><ul>${iv.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><h2>Reported experiences</h2>${iv.reports.map((r) => `<h3>${esc(r.label)}</h3><p>${esc(r.text)}</p>`).join('')}<h2>Sources</h2><ul>${iv.sources.map((x) => `<li><a href="${esc(x.url)}" rel="nofollow noreferrer">${esc(x.title)}</a></li>`).join('')}</ul><p><a href="/placements/companies/${company}">${esc(name)} test pattern and mock tests</a></p>`,
@@ -389,9 +415,9 @@ for (const [path, title, description, h1] of [
   for (const c of idx.companies.filter((x) => x.asked)) {
     const data = P(`t/asked/${c.id}.json`);
     write(`/placements/asked/${c.id}`, {
-      title: `${c.name} Previously Asked Questions with Solutions (Memory-Based) | OU All In One`,
-      description: `${data.questions.length} ${c.name} questions reported by candidates from recent tests, with answers and step-by-step solutions.`,
-      h1: `Previously asked ${c.name} questions`,
+      title: `${c.name} Previous Year Questions with Solutions (Memory-Based) | OU All In One`,
+      description: `${data.questions.length} ${c.name} previous year questions reported by candidates from recent tests (memory-based), with answers and step-by-step solutions. Free.`,
+      h1: `${c.name} previous year questions with solutions`,
       intro: data.desc,
       priority: 0.8,
       body: data.questions.map((q, i) => qHtml(q, i + 1)).join('') + `<p><a href="/placements/companies/${c.id}">${esc(c.name)} test pattern and mock tests</a></p>`,
@@ -407,12 +433,14 @@ for (const [path, title, description, h1] of [
       intro: data.desc,
       priority: 0.6,
       body: data.questions.slice(0, 100).map((q, i) => qHtml(q, i + 1)).join('') + `<p><a href="/placements/companies/${c.id}">${esc(c.name)} test pattern and mock tests</a></p>`,
+      jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], ['Companies', '/placements/companies'], [c.name, `/placements/companies/${c.id}`], ['Practice set', `/placements/practice/${c.id}`]])],
     });
   }
   const allMocks = [...groups, ...idx.companies].flatMap((x) => x.mocks);
   for (const m of allMocks) {
     write(`/placements/mock/${m.id}`, {
-      title: `${m.title}: Free Online Test (${m.questions} Questions) | OU All In One`,
+      title: `${m.title}: Free Online Test ${YEAR} (${m.questions} Questions) | OU All In One`,
+      jsonld: [crumbs([['Home', '/'], ['Placements', '/placements'], [m.title, `/placements/mock/${m.id}`]])],
       description: `Free timed online mock test: ${m.questions} questions in ${m.minutes} minutes (${m.sections.map((s) => s.title).join(', ')}). Instant score with answers and explanations.`,
       h1: m.title,
       intro: `${m.questions} questions · ${m.minutes} minutes`,
@@ -427,6 +455,6 @@ writeFileSync(
   join(DIST, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${esc(u.loc)}</loc><lastmod>${today}</lastmod><priority>${u.priority.toFixed(1)}</priority></url>`).join('\n')}\n</urlset>\n`,
 );
-writeFileSync(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /view/\nDisallow: /folder/\nDisallow: /search\n\nSitemap: ${SITE}/sitemap.xml\n`);
+writeFileSync(join(DIST, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /view/\nDisallow: /folder/\nDisallow: /search\nDisallow: /admin\n\nSitemap: ${SITE}/sitemap.xml\n`);
 const rs = readStats();
 console.log(`prerendered ${urls.length} pages, sitemap.xml and robots.txt (Firestore: ${rs.fresh} collections read, ~${rs.reads} reads; ${rs.cached} from the local cache)`);

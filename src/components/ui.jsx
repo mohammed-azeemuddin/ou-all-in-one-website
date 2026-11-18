@@ -194,8 +194,100 @@ export function Empty({ title, body, action }) {
   );
 }
 
-export function useTitle(title) {
+const SITE = 'https://www.ouallinone.com';
+const cleanPath = (p) => p.replace(/\/+$/, '') || '/';
+/**
+ * What the server sent for the address the visitor landed on. Pages written by scripts/prerender.mjs
+ * carry a search-friendly title, description and canonical link; Google reads the page after this
+ * script has run, so on that first page they must be left as they are.
+ */
+const landed = (() => {
+  if (typeof document === 'undefined') return null;
+  const path = cleanPath(location.pathname);
+  const canonical = document.head.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? '';
+  return {
+    path,
+    title: document.title,
+    description: document.head.querySelector('meta[name="description"]')?.getAttribute('content') ?? '',
+    prerendered: canonical.startsWith(SITE) && cleanPath(canonical.slice(SITE.length)) === path,
+  };
+})();
+
+/**
+ * Sets the tab title. On the page the visitor landed on, the pre-rendered title and description stay.
+ * On every other page the canonical link follows the address, and `noindex` keeps empty or missing
+ * pages out of Google.
+ */
+export function useTitle(title, { noindex = false } = {}) {
   useEffect(() => {
-    document.title = title ? `${title} · OU All In One` : 'OU All In One · Osmania University papers, notes and placements';
-  }, [title]);
+    const path = cleanPath(location.pathname);
+    const keep = landed?.prerendered && landed.path === path;
+    document.title = keep ? landed.title : title ? `${title} · OU All In One` : 'OU All In One · Osmania University papers, notes and placements';
+    const head = document.head;
+    let canonical = head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      head.appendChild(canonical);
+    }
+    canonical.href = SITE + path;
+    head.querySelector('meta[name="description"]')?.setAttribute('content', keep ? landed.description : `${title || 'Papers, notes, lab manuals and placement prep'}. Free on OU All In One.`);
+    const robots = head.querySelector('meta[data-noindex]');
+    if (noindex && !robots) {
+      const m = document.createElement('meta');
+      m.name = 'robots';
+      m.content = 'noindex';
+      m.setAttribute('data-noindex', '');
+      head.appendChild(m);
+    } else if (!noindex && robots) robots.remove();
+  }, [title, noindex]);
+}
+
+/** Counts Telegram joins in Google Analytics (when it is loaded), by where the button was. */
+const trackJoin = (place) => {
+  try {
+    window.gtag?.('event', 'join_telegram', { place });
+  } catch {}
+};
+
+export function TelegramIcon({ size = 26 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="m3.6 11.4 15.5-6c.7-.3 1.4.2 1.1 1.3l-2.6 12.4c-.2.9-.7 1.1-1.4.7l-4-3-2 1.9c-.2.2-.4.4-.8.4l.3-4.1 7.5-6.8c.3-.3-.1-.5-.5-.2l-9.3 5.9-4-1.3c-.9-.3-.9-.9.2-1.2Z" />
+    </svg>
+  );
+}
+
+/**
+ * The "Join Telegram" card for job updates, in Telegram blue so it stands out from the page.
+ * The whole card is one link. `compact` is the slimmer version for sidebars and page ends.
+ */
+export function TelegramCard({ place = 'placements', compact = false, title = 'Get job updates on Telegram', text = 'Job and internship openings for freshers. Free to join.', className = '' }) {
+  return (
+    <a className={`tg-card ${compact ? 'is-compact' : ''} ${className}`} href={TELEGRAM_URL} target="_blank" rel="noreferrer" onClick={() => trackJoin(place)}>
+      <span className="tg-ico"><TelegramIcon size={compact ? 22 : 28} /></span>
+      <span className="tg-text">
+        <b>{title}</b>
+        <small>{text}</small>
+      </span>
+      <span className="tg-btn">Join <span aria-hidden="true">→</span></span>
+    </a>
+  );
+}
+
+/** Common questions with answers, always visible so students and search engines both read them. */
+export function Faq({ items, heading = 'Frequently asked questions' }) {
+  return (
+    <section className="faq" aria-label={heading}>
+      <h2 className="section-title">{heading}</h2>
+      <dl>
+        {items.map(([q, a]) => (
+          <div key={q} className="faq-item">
+            <dt>{q}</dt>
+            <dd className="muted">{a}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
 }

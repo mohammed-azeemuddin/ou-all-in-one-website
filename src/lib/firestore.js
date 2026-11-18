@@ -4,6 +4,7 @@
  */
 const PROJECT = 'ou-all-in-one-83b53';
 const KEY = 'AIzaSyAGs_fbwAPvlvTstHiFsZVffkA1SNcJpCI'; // public web key, already shipped in the 2022 site
+export { KEY as FIREBASE_KEY, PROJECT as FIREBASE_PROJECT };
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
 
 function decode(v) {

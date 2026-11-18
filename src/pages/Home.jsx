@@ -200,7 +200,7 @@ export default function Home() {
             <h1 className="hx-title fade-up" style={{ '--delay': '60ms' }}>
               Papers, notes, labs and <span className="grad">placements</span>
             </h1>
-            <p className="hx-sub fade-up" style={{ '--delay': '120ms' }}>For Osmania University students. Free.</p>
+            <p className="hx-sub fade-up" style={{ '--delay': '120ms' }}>Osmania University previous question papers, notes and lab manuals, plus placement prep. Free.</p>
             <div className="hx-switch fade-up" role="tablist" aria-label="What are you preparing for?" style={{ '--delay': '160ms' }}>
               <button role="tab" id="hx-tab-exams" aria-selected={tab === 'exams'} aria-controls="hx-exams" className={tab === 'exams' ? 'on' : ''} onClick={() => choose('exams')}>Exams</button>
               <button role="tab" id="hx-tab-placements" aria-selected={tab === 'placements'} aria-controls="hx-placements" className={tab === 'placements' ? 'on' : ''} onClick={() => choose('placements')}>Placements</button>

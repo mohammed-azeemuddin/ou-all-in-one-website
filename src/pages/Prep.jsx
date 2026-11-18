@@ -8,8 +8,8 @@ import { createPortal } from 'react-dom';
 import { Link, useParams } from 'react-router-dom';
 
 import ItemList from '../components/ItemList';
-import { Empty, PageHero, Reveal, useTitle } from '../components/ui';
-import { TELEGRAM_URL } from '../lib/courses';
+import { Empty, Faq, PageHero, Reveal, TelegramCard, useTitle } from '../components/ui';
+import { FAQ } from '../lib/faq';
 import { answer, companyStats, groupStats, mockStats, recordMock, resetAll, resetTopic, TARGET, topicDone, useProgress } from '../lib/progress';
 
 const BASE = '/data/placements';
@@ -154,9 +154,10 @@ export function PrepHub() {
   const p = useProgress();
   return (
     <>
-      <PageHero eyebrow="Placements and Interviews" title="Placement preparation, free" sub="Aptitude, reasoning, verbal and technical practice with worked answers, timed mock tests, and company-wise prep for TCS, Infosys, Wipro, Accenture and more." art="/img/interview2.png" />
+      <PageHero eyebrow="Placements and Interviews" title="Free placement preparation" sub="A free placement preparation course for freshers: aptitude, reasoning, verbal and technical practice with worked answers, previous year company questions, interview experiences and timed mock tests for TCS, Infosys, Wipro, Accenture and more." art="/img/interview2.png" />
       <section className="section">
         <div className="wrap">
+          <TelegramCard place="hub-top" className="tg-top" />
           {error ? <Failed /> : !data ? <Loading /> : (
             <>
               <ProgressSummary data={data} p={p} />
@@ -229,17 +230,12 @@ export function PrepHub() {
           )}
 
           <Reveal as="h2" className="section-title spaced">Jobs and internships</Reveal>
-          <Reveal className="telegram">
-            <span className="feature-ico" aria-hidden="true">📨</span>
-            <div>
-              <b>Get openings first on Telegram</b>
-              <p className="muted">Job and internship openings are posted on t.me/ouallinone.</p>
-            </div>
-            <a className="btn" href={TELEGRAM_URL} target="_blank" rel="noreferrer">Join</a>
-          </Reveal>
+          <p className="muted narrow-left">Job and internship openings for freshers are posted on our Telegram channel, t.me/ouallinone, as they come.</p>
+          <TelegramCard place="hub-jobs" className="tg-top" title="See the latest openings on Telegram" text="Join the channel so you don't miss a drive." />
           <div className="narrow-left">
-            <ItemList collection="jobs" noun="listings" emptyText="No listings on the website right now. The Telegram channel has the latest openings." />
+            <ItemList collection="jobs" noun="listings" hideEmpty />
           </div>
+          <Faq items={FAQ.placements} heading="Placement preparation: common questions" />
         </div>
       </section>
     </>
@@ -297,6 +293,7 @@ export function PrepGroup() {
             <h2 className="section-title">{g.title} mock tests</h2>
             <p className="muted small">Each covers all topics in this section.{g.mocks.some((m) => m.topic) ? ' Topic mock tests are inside each topic.' : ''}</p>
             <div className="rows">{g.mocks.filter((m) => !m.topic).map((m) => <MockCard key={m.id} m={m} />)}</div>
+            <TelegramCard compact place="section" />
           </aside>
         </div>
       </section>
@@ -397,9 +394,10 @@ export function PrepTopic() {
   const picks = p.t[topicKey] ?? {};
   const [reveal, setReveal] = useState(false);
   const [shown, setShown] = useState(40);
-  useTitle(data ? `${data.title} questions` : 'Practice');
   const g = idx.data ? findGroup(idx.data, group) : null;
   const company = group === 'asked' || group === 'practice' ? idx.data?.companies.find((c) => c.id === topic) : null;
+  const heading = !data ? 'Practice' : group === 'asked' && company ? `${company.name} previous year questions with solutions` : `${data.title} questions`;
+  useTitle(heading);
   if (error) return <Failed />;
   if (!data) return <Loading />;
   const back = company ? [`/placements/companies/${company.id}`, company.name] : [`/placements/${group}`, g?.title ?? 'Back'];
@@ -409,7 +407,7 @@ export function PrepTopic() {
   const firstOpen = data.questions.findIndex((q) => picks[q.id] === undefined);
   return (
     <>
-      <PageHero eyebrow={<Link to={back[0]}>← {back[1]}</Link>} title={`${data.title} questions`} sub={`${data.desc} ${data.questions.length} questions with answers and explanations.`} />
+      <PageHero eyebrow={<Link to={back[0]}>← {back[1]}</Link>} title={heading} sub={`${data.desc} ${data.questions.length} questions with answers and explanations.`} />
       <section className="section tight">
         <div className="wrap narrow">
           <div className="practice-head">
@@ -455,6 +453,7 @@ export function PrepTopic() {
               <Link to={`/placements/${g.id}`} className="btn btn-small">See {g.title} mock tests →</Link>
             </div>
           ) : null}
+          <TelegramCard compact place="topic" className="tg-end" />
         </div>
       </section>
     </>
@@ -468,7 +467,7 @@ export function PrepCompanies() {
   const p = useProgress();
   return (
     <>
-      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Company-wise preparation" sub="Test patterns, tips, coding practice and three mock tests for each company that hires OU students in large numbers." />
+      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Company-wise placement preparation" sub="Test patterns, tips, previous year questions, coding practice and three mock tests for each company that hires freshers in large numbers." />
       <section className="section tight">
         <div className="wrap">
           {error ? <Failed /> : !data ? <Loading /> : (
@@ -486,6 +485,7 @@ export function PrepCompanies() {
               ))}
             </div>
           )}
+          <TelegramCard place="companies" className="tg-end" />
         </div>
       </section>
     </>
@@ -565,7 +565,7 @@ export function PrepCoding() {
   );
   return (
     <>
-      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Coding practice" sub="Coding problems candidates reported from TCS, Infosys, Wipro, Accenture, Cognizant and more, written up with our own examples and hints. Free." />
+      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Previous year coding questions" sub="Coding questions candidates reported from TCS, Infosys, Wipro, Accenture, Cognizant and more, written up with our own examples and hints. Free." />
       <section className="section tight">
         <div className="wrap">
           {error ? <Failed /> : !data ? <Loading /> : (
@@ -587,6 +587,7 @@ export function PrepCoding() {
               <p className="muted small spaced-top">Company tags are memory-based reports from candidates and public prep sites; companies do not publish their questions, and the exact problems change between drives.</p>
             </>
           )}
+          <TelegramCard compact place="coding" className="tg-end" />
         </div>
       </section>
     </>
@@ -664,7 +665,7 @@ export function PrepInterviews() {
   const { data, error } = useJson('index.json');
   return (
     <>
-      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Interview preparation" sub="What TCS, Infosys, Wipro, Accenture and others asked candidates in recent interviews, and answers to the questions they ask most, by subject. Free." />
+      <PageHero eyebrow={<Link to="/placements">← Placements</Link>} title="Interview experiences and questions" sub="What TCS, Infosys, Wipro, Accenture and others asked freshers in recent interviews, and answers to the interview questions they ask most, by subject. Free." />
       <section className="section tight">
         <div className="wrap">
           {error ? <Failed /> : !data ? <Loading /> : (
@@ -703,6 +704,8 @@ export function PrepInterviews() {
               <p className="muted small spaced-top">Interview questions vary by campus, role and interviewer. Company questions are summarised from candidates' public write-ups; the source links are on each company page.</p>
             </>
           )}
+          <TelegramCard place="interviews" className="tg-end" title="Interview coming up? Get job updates on Telegram" />
+          <Faq items={FAQ.interviews} heading="Interview preparation: common questions" />
         </div>
       </section>
     </>
@@ -720,7 +723,7 @@ export function PrepInterviewCompany() {
   if (!data || !idx.data) return <Loading />;
   return (
     <>
-      <PageHero eyebrow={<Link to="/placements/interviews">← Interview preparation</Link>} title={`${c.name} interview experience`} sub={data.summary}>
+      <PageHero eyebrow={<Link to="/placements/interviews">← Interview preparation</Link>} title={`${c.name} interview experience and questions`} sub={data.summary}>
         <div className="hero-logo"><CompanyLogo c={c} size={64} /></div>
       </PageHero>
       <section className="section tight">
@@ -732,6 +735,7 @@ export function PrepInterviewCompany() {
                 <li key={r.title}><b>{r.title}</b><span className="muted">{r.what}</span></li>
               ))}
             </ol>
+            <TelegramCard compact place="interview-company" className="tg-end" />
 
             <h2 className="section-title spaced">What they focus on</h2>
             <div className="chips wrap-chips">{data.focus.map((f) => <span key={f} className="chip static">{f}</span>)}</div>
@@ -838,6 +842,7 @@ export function PrepInterviewSubject() {
             {others.map((s) => <Link key={s.id} to={`/placements/interview-questions/${s.id}`} className="chip">{s.title}</Link>)}
           </div>
           <p className="muted small spaced-top">Answers written for OU All In One. Company tags show where candidates reported being asked this question in interviews.</p>
+          <TelegramCard compact place="interview-subject" className="tg-end" />
         </div>
       </section>
     </>
@@ -868,6 +873,7 @@ export function PrepCompany() {
           <h2 className="section-title">{c.name} mock tests</h2>
           <p className="muted small">Free, timed, and built on the reported {c.name} pattern: {totalQ} questions in {totalM} minutes.</p>
           <div className="mock-grid">{c.mocks.map((m) => <MockCard key={m.id} m={m} />)}</div>
+          <TelegramCard compact place="company" className="tg-end" />
         </div>
       </section>
       <section className="section tight asked-strip">
@@ -1121,6 +1127,7 @@ export function PrepMock() {
                 <Link className="btn btn-ghost" to="/placements">More tests</Link>
               </div>
             </div>
+            <TelegramCard place="mock-result" className="tg-end tg-top" />
             <div className="practice-bar">
               <b>Review answers</b>
               <label className="check"><input type="checkbox" checked={onlyWrong} onChange={(e) => setOnlyWrong(e.target.checked)} /> Only wrong or skipped</label>

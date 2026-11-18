@@ -102,7 +102,7 @@ function Skeleton() {
 }
 
 /** The shared list used by every catalog page: search, branch chips, sort, subject grouping. */
-export default function ItemList({ collection, noun = 'items', groupable, emptyText, subjectBase }) {
+export default function ItemList({ collection, noun = 'items', groupable, emptyText, subjectBase, hideEmpty = false }) {
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
@@ -167,6 +167,7 @@ export default function ItemList({ collection, noun = 'items', groupable, emptyT
       />
     );
   if (!items) return <Skeleton />;
+  if (!items.length && hideEmpty) return null;
   if (!items.length) return <Empty title="Nothing here yet" body={emptyText ?? 'New material is added regularly.'} />;
 
   const subjects = new Set(all.map((i) => parseName(i.name).subject)).size;

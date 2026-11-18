@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import ItemList, { Row } from '../components/ItemList';
-import { Empty, PageHero, Reveal, useTitle } from '../components/ui';
+import { Empty, Faq, PageHero, Reveal, useTitle } from '../components/ui';
 import { CONTACT_EMAIL, COURSES, collectionFor, courseById, SECTIONS, TELEGRAM_URL } from '../lib/courses';
+import { FAQ } from '../lib/faq';
 import { driveDownload, drivePreview, folderEmbed } from '../lib/files';
 import { loadCollection } from '../lib/firestore';
 import { neutralLabels, unitSortKey } from '../lib/fileLabel';
@@ -25,7 +26,12 @@ export function Section({ section }) {
   const courses = counts ? COURSES.filter((c) => (counts[`${section}:${c.id}`] ?? 1) > 0) : COURSES;
   return (
     <>
-      <PageHero eyebrow={section === 'papers' ? 'Question papers' : 'Notes'} title={s.title} sub={s.blurb} art={s.gif} />
+      <PageHero
+        eyebrow={section === 'papers' ? 'Question papers' : 'Notes'}
+        title={section === 'papers' ? 'OU previous question papers' : 'OU notes and references'}
+        sub={section === 'papers' ? 'Osmania University previous year question papers as PDF. Pick your course to browse by subject and year.' : 'Osmania University notes as PDF, printed and handwritten. Pick your course.'}
+        art={s.gif}
+      />
       <section className="section">
         <div className="wrap course-grid big">
           {courses.map((c, i) => (
@@ -40,6 +46,9 @@ export function Section({ section }) {
               </Link>
             </Reveal>
           ))}
+        </div>
+        <div className="wrap">
+          <Faq items={FAQ[section]} heading={section === 'papers' ? 'OU question papers: common questions' : 'OU notes: common questions'} />
         </div>
       </section>
     </>
@@ -57,8 +66,8 @@ export function CourseList({ section }) {
     <>
       <PageHero
         eyebrow={<Link to={`/${section}`} className="crumb">← {s.title}</Link>}
-        title={`${c.title} ${section === 'papers' ? 'Papers' : 'Notes'}`}
-        sub={c.sub}
+        title={`OU ${c.title === 'Other streams' ? 'other streams' : c.title} ${section === 'papers' ? 'previous question papers' : 'notes'}`}
+        sub={`Osmania University · ${c.sub}`}
       />
       <section className="section tight">
         <div className="wrap narrow">
@@ -114,7 +123,7 @@ export function SubjectPage({ section }) {
   }, [c, section, subject]);
   const title = items?.length ? parseName(items[0].name).title : subject.replace(/-/g, ' ');
   const what = section === 'papers' ? 'previous question papers' : 'notes';
-  useTitle(`${title} ${what} · OU ${c?.title ?? ''}`);
+  useTitle(`${title} ${what} · OU ${c?.title ?? ''}`, { noindex: items !== null && !items.length });
   if (!c) return <Navigate to={`/${section}`} replace />;
   const codes = [...new Set((items ?? []).map((i) => parseName(i.name).code).filter(Boolean))];
   const sessions = (items ?? []).map((i) => parseName(i.name).session).filter(Boolean);
@@ -247,7 +256,7 @@ export function Labs() {
   useTitle('Lab manuals');
   return (
     <>
-      <PageHero eyebrow="Labs and Viva" title="Lab Manuals and Viva" sub="Lab manuals, records and viva questions for internals and externals." art="/img/fast_company_lab.gif" />
+      <PageHero eyebrow="Labs and Viva" title="OU lab manuals and viva questions" sub="Osmania University lab manuals, records and viva questions for internals and externals." art="/img/fast_company_lab.gif" />
       <section className="section tight">
         <div className="wrap narrow">
           <ItemList collection="lab_manuals" noun="manuals" emptyText="Lab manuals and viva questions are being added. Have one to share? Email us and it will be added for everyone." />
@@ -469,7 +478,7 @@ export function Contact() {
 }
 
 export function NotFound() {
-  useTitle('Page not found');
+  useTitle('Page not found', { noindex: true });
   return (
     <section className="section">
       <div className="wrap">
