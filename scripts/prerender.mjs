@@ -264,8 +264,30 @@ for (const section of ['papers', 'notes']) {
   }
 }
 
+// Lab manuals: every manual in the HTML, grouped by branch, so search engines see the list visitors see.
+{
+  const BRANCH = { cse: 'CSE, IT and AI&DS', ece: 'ECE', eee: 'EEE', mech: 'Mechanical', civil: 'Civil' };
+  const labs = (await collectionDocs('lab_manuals'))
+    .map(decodeDoc)
+    .filter((x) => typeof x.name === 'string' && x.name.trim() && typeof x.url === 'string' && /^https:\/\//.test(x.url))
+    .map((x) => ({ ...x, title: x.name.replace(/\s*\((?:CSE|IT|AI&DS|ECE|EEE|Mech|Civil)\)\s*$/, '').trim() }))
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { numeric: true, sensitivity: 'base' }));
+  const groups = [...Object.entries(BRANCH), ['', 'First year and common']]
+    .map(([id, label]) => [label, labs.filter((x) => (x.branch ?? '') === id || (!id && !BRANCH[x.branch]))])
+    .filter(([, items]) => items.length);
+  const college = (x) => String(x.source ?? '').split(' · ')[0].replace(/^Muffakham Jah College of Engineering and Technology \(MJCET\)$/, 'MJCET').replace(/^Methodist College of Engineering and Technology$/, 'Methodist');
+  write('/labs', {
+    title: 'OU Lab Manuals and Viva Questions PDF | OU All In One',
+    description: `${labs.length} lab manuals for Osmania University (OU) B.E. labs: CSE, IT, ECE, EEE, Mechanical, Civil and first year. Open the PDF free, no sign-up.`,
+    h1: 'OU lab manuals and viva questions',
+    intro: `${labs.length} lab manuals for B.E. lab courses, published by OU-affiliated colleges on their websites. Experiments, procedures and viva questions for internals and externals.`,
+    priority: 0.8,
+    body: groups.map(([label, items]) => `<h2>${esc(label)} lab manuals</h2>${list(items.map((x) => [x.url, `${x.title} manual`, [x.semester ? `Sem ${x.semester}` : '', college(x)].filter(Boolean).join(' · ')]))}`).join('') + '<p class="muted">Each manual is the college’s own PDF, linked from its website. Experiments can differ slightly between colleges and syllabus years.</p>',
+    jsonld: [crumbs([['Home', '/'], ['Lab manuals', '/labs']])],
+  });
+}
+
 for (const [path, title, description, h1] of [
-  ['/labs', 'OU Lab Manuals and Viva Questions PDF | OU All In One', 'Osmania University (OU) lab manuals, lab records and viva questions for internals and externals. Free, no sign-up.', 'OU lab manuals and viva questions'],
   ['/tools', 'SGPA, CGPA and Attendance Calculator (OU) | OU All In One', 'Calculate your SGPA with OU CBCS grades, and how many classes you can skip at 75% attendance.', 'SGPA and attendance calculators'],
   ['/contact', 'Contact | OU All In One', 'Questions, ideas, a paper to share, or a removal request: email ouallinone@gmail.com.', 'Contact OU All In One'],
 ]) write(path, { title, description, h1, body: '', priority: 0.5 });
