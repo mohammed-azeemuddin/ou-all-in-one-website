@@ -894,3 +894,7 @@ a.asked-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift)
 .admin-list li { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--border); }
 .admin-list a { min-width: 0; overflow-wrap: anywhere; }
 .admin-del { flex: none; color: #d93b3b; }
+.admin-form textarea { padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 1rem; resize: vertical; width: 100%; }
+.admin-form textarea:focus { outline: none; border-color: var(--hat); }
+.admin-form input:disabled { opacity: 0.5; }
+.admin-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; background: var(--surface-2); }

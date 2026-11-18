@@ -1,6 +1,6 @@
 /**
- * /admin: sign in, then add or delete papers, notes, lab manuals and job listings, and edit the
- * home notice and the app's "What's New" card. Everything is written to Firestore, which the app
+ * /admin: sign in, then add or delete papers, notes, lab manuals and job listings, post to the
+ * app's "What's New" list (Firestore `whats_new`) and edit the home notice. Everything is written to Firestore, which the app
  * and this website both read, so changes appear without an app update or a website deploy.
  *
  * The page is public but harmless without the admin account: Firestore's security rules refuse
@@ -24,7 +24,11 @@ const KINDS = [
   ['labs', 'Lab manual'],
   ['jobs', 'Job or internship'],
 ];
-const collectionOf = (kind, course) => (kind === 'papers' ? `${course}_qp` : kind === 'notes' ? `${course}_notes` : kind === 'labs' ? 'lab_manuals' : 'jobs');
+const collectionOf = (kind, course) => (kind === 'papers' ? `${course}_qp` : kind === 'notes' ? `${course}_notes` : kind === 'labs' ? 'lab_manuals' : kind === 'updates' ? 'whats_new' : 'jobs');
+// The Existing items list can also show What's New posts.
+const MANAGE_KINDS = [...KINDS, ['updates', 'What’s New post']];
+/** Drive file link -> Drive's image thumbnail (the same conversion the app does), so the preview shows the picture. */
+const imagePreview = (u) => { const id = u.match(DRIVE_FILE)?.[1]; return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200` : u; };
 
 /** "Machine Learning", 10481, FEB, 2026 -> "MACHINE-LEARNING-10481-FEB-2026" (the format the app's name parser reads). */
 const paperName = (subject, code, month, year) => `${subject.trim().toUpperCase().replace(/&/g, ' AND ').replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '')}-${code}-${month}-${year}`;
@@ -180,7 +184,7 @@ function Manage() {
     <div className="panel admin-form">
       <h2>Existing items</h2>
       <div className="chips">
-        {KINDS.map(([k, label]) => <button key={k} type="button" className={`chip ${kind === k ? 'on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>{label}s</button>)}
+        {MANAGE_KINDS.map(([k, label]) => <button key={k} type="button" className={`chip ${kind === k ? 'on' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>{label}s</button>)}
       </div>
       {kind === 'papers' || kind === 'notes' ? (
         <label>Course
@@ -210,24 +214,21 @@ function Manage() {
   );
 }
 
-function HomeCards() {
-  const [m, setM] = useState(null);
+function Notice() {
+  const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   useEffect(() => {
-    readMeta().then((d) => setM({ notice: d.notice ?? '', desc: d.whatsNew?.desc ?? '', url: d.whatsNew?.url ?? '', cta: d.whatsNew?.cta ?? '', image: d.whatsNew?.image ?? '' }));
+    readMeta().then((d) => setNotice(d.notice ?? ''));
   }, []);
-  if (!m) return <div className="panel"><p className="muted">Loading…</p></div>;
-  const set = (k) => (e) => setM((x) => ({ ...x, [k]: e.target.value }));
-  const bad = [m.url, m.image].some((u) => u.trim() && !/^(https:\/\/\S+|\/[\w/-]*)$/.test(u.trim()));
+  if (notice === null) return <div className="panel"><p className="muted">Loading…</p></div>;
   const save = async (e) => {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
     try {
-      const whatsNew = Object.fromEntries(['desc', 'url', 'cta', 'image'].map((k) => [k, m[k].trim()]).filter(([, v]) => v));
-      await saveMeta({ notice: m.notice.trim(), whatsNew: Object.keys(whatsNew).length ? whatsNew : '' });
-      setMsg({ ok: true, text: 'Saved. The app shows it the next time it is opened.' });
+      await saveMeta({ notice: notice.trim() });
+      setMsg({ ok: true, text: notice.trim() ? 'Saved. It shows on the app and website home screens.' : 'Notice removed.' });
     } catch (err) {
       setMsg({ ok: false, text: err.message });
     } finally {
@@ -236,21 +237,69 @@ function HomeCards() {
   };
   return (
     <form className="panel admin-form" onSubmit={save}>
-      <h2>Notice and What’s New</h2>
-      <label>Notice (a short line on the home screen of the app and website; leave empty for none)
-        <input value={m.notice} onChange={set('notice')} maxLength={160} />
+      <h2>Home notice</h2>
+      <label>A short line on the home screen of the app and website (leave empty for none)
+        <input value={notice} onChange={(e) => setNotice(e.target.value)} maxLength={160} />
       </label>
-      <h3>What’s New card in the app</h3>
-      <p className="muted small">Leave all four empty to show the card built into the app.</p>
-      <label>Text<input value={m.desc} onChange={set('desc')} maxLength={110} placeholder="Free mock tests for TCS, Infosys, Wipro and more on our website." /></label>
-      <div className="admin-row">
-        <label>Button text<input value={m.cta} onChange={set('cta')} maxLength={16} placeholder="Try now" /></label>
-        <label>Opens (web link, or an app screen such as /papers)<input value={m.url} onChange={set('url')} placeholder="https://www.ouallinone.com/placements" /></label>
-      </div>
-      <label>Picture link (optional; an https link to a JPG, PNG or WebP, about 640 × 800)<input value={m.image} onChange={set('image')} placeholder="https://www.ouallinone.com/img/…" /></label>
-      {bad ? <p className="muted small">Links must start with https:// (or / for an app screen).</p> : null}
       {msg ? <p className={`admin-msg ${msg.ok ? 'is-good' : 'is-bad'}`} role="status">{msg.text}</p> : null}
-      <button className="btn" disabled={busy || bad}>{busy ? 'Saving…' : 'Save'}</button>
+      <button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save notice'}</button>
+    </form>
+  );
+}
+
+const EMPTY_POST = { title: '', body: '', image: '', link: '', linkText: '' };
+
+/** A What's New post: the app's home card shows the newest one, and the What's New screen lists them all. */
+function AddUpdate() {
+  const [f, setF] = useState(EMPTY_POST);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [imgOk, setImgOk] = useState(true);
+  const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const image = f.image.trim();
+  const link = f.link.trim();
+  const problem = !f.title.trim()
+    ? 'Enter a title.'
+    : image && !/^https:\/\/\S+$/.test(image)
+      ? 'The picture link must start with https://'
+      : link && !/^(https:\/\/\S+|\/[\w/-]*)$/.test(link)
+        ? 'The button link must start with https:// (or / for an app screen such as /papers).'
+        : '';
+  const submit = async (e) => {
+    e.preventDefault();
+    if (problem) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const now = Date.now();
+      await saveItem('whats_new', null, { name: f.title.trim(), body: f.body.trim(), image, link, linkText: link ? f.linkText.trim() : '', date: now, updatedAt: now });
+      setMsg({ ok: true, text: 'Posted. It is the newest item in What’s New and on the app’s home card the next time the app is opened.' });
+      setF(EMPTY_POST);
+    } catch (err) {
+      setMsg({ ok: false, text: err.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form className="panel admin-form" onSubmit={submit}>
+      <h2>Post to What’s New</h2>
+      <p className="muted small">The app’s home card shows the newest post; tapping it opens the full list. Delete old posts under Existing items.</p>
+      <label>Title<input value={f.title} onChange={set('title')} maxLength={120} placeholder="New: Pharmacy papers for 2025 added" /></label>
+      <label>Text (optional)<textarea rows={4} value={f.body} onChange={set('body')} maxLength={1200} placeholder="A line or two about what changed." /></label>
+      <label>Picture (optional): a Google Drive image shared as “Anyone with the link”, or any https image link. Wide pictures (16:9) look best.
+        <input value={f.image} onChange={(e) => { set('image')(e); setImgOk(true); }} inputMode="url" placeholder="https://drive.google.com/file/d/…/view" />
+      </label>
+      {image && /^https:\/\//.test(image) ? (
+        imgOk ? <img key={image} className="admin-img" src={imagePreview(image)} referrerPolicy="no-referrer" alt="Picture preview" onLoad={() => setImgOk(true)} onError={() => setImgOk(false)} /> : <p className="admin-msg is-bad">This picture doesn’t load. Check that the Drive file is shared as “Anyone with the link”.</p>
+      ) : null}
+      <div className="admin-row">
+        <label>Button link (optional)<input value={f.link} onChange={set('link')} placeholder="https://… or /papers" /></label>
+        <label>Button text<input value={f.linkText} onChange={set('linkText')} maxLength={24} placeholder="Open" disabled={!link} /></label>
+      </div>
+      {msg ? <p className={`admin-msg ${msg.ok ? 'is-good' : 'is-bad'}`} role="status">{msg.text}</p> : null}
+      <button className="btn" disabled={busy || !!problem}>{busy ? 'Posting…' : 'Post'}</button>
+      {problem && (f.title || f.image || f.link) ? <p className="muted small">{problem}</p> : null}
     </form>
   );
 }
@@ -267,7 +316,8 @@ export default function Admin() {
             <>
               <p className="muted">Signed in as {email}. <button type="button" className="link-btn" onClick={() => { signOut(); setEmail(null); }}>Sign out</button></p>
               <AddItem />
-              <HomeCards />
+              <AddUpdate />
+              <Notice />
               <Manage />
             </>
           )}
