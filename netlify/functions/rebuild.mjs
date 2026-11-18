@@ -19,10 +19,16 @@ export default async (req) => {
 
   const check = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_KEY}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    // The web key only accepts requests from the site (Google Cloud key restriction), so say where we are.
+    headers: { 'Content-Type': 'application/json', Referer: 'https://www.ouallinone.com/' },
     body: JSON.stringify({ idToken }),
   }).catch(() => null);
-  if (!check?.ok) return reply(401, { error: 'Your sign-in ran out. Sign in again.' });
+  if (!check) return reply(502, { error: 'Couldn’t reach Google to check the sign-in. Try again.' });
+  if (!check.ok) {
+    const why = (await check.json().catch(() => ({}))).error?.message ?? '';
+    if (/INVALID_ID_TOKEN|TOKEN_EXPIRED|USER_NOT_FOUND/.test(why)) return reply(401, { error: 'Your sign-in ran out. Sign in again.' });
+    return reply(502, { error: `Google refused the sign-in check (${check.status}${why ? `: ${why}` : ''}).` });
+  }
   const uid = (await check.json()).users?.[0]?.localId;
   if (uid !== ADMIN_UID) return reply(403, { error: 'Not allowed.' });
 
